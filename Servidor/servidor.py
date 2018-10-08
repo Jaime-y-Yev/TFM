@@ -2,7 +2,7 @@
 import threading
 hiloFlaskID = 1             
 hiloPhpLiteAdminID = 2      
-hiloSubCoordActID = 3       
+
 
 matarHilos = 'o'            # señal que mata a los hilos
 from time import sleep      # para ralentizar el checkeo de la variable matarHilos
@@ -23,8 +23,6 @@ def matarHilo(proceso):
 import os
 import subprocess
 
-# Funciones MQTT
-from mqttServidor import subCoordAct, pubSubDisconnect      
 
 
 
@@ -45,8 +43,8 @@ class Hilo(threading.Thread):
 
             os.environ["FLASK_DEBUG"] = "0"     # no arrancar en modo de depuración
 
-            # Arrancar el proceso Flask mediante PowerShell, buscando al archivo app.py en el directorio indicado por cwd (similar a establacer la variable de entorno con os.environ["FLASK_APP"] = "/c/users/y/documents/trabajofinmaster/tfm/servidor/app.py" ???)
-            flaskProceso = subprocess.Popen(['powershell.exe','flask run','--host=0.0.0.0 --port=8080'], cwd='c:/users/y/documents/trabajofinmaster/tfm/servidor')
+            # Arrancar el proceso Flask mediante PowerShell
+            flaskProceso = subprocess.Popen(['powershell.exe','python','app.py'], cwd='c:/users/y/documents/trabajofinmaster/tfm/servidor')
 
             matarHilo(flaskProceso)             # esperar a la señal para matar al proceso de Flask
             
@@ -64,16 +62,6 @@ class Hilo(threading.Thread):
 
             print("Terminando hilo phpLiteAdmin")
 
-
-        # Hilo del sub MQTT que recibe y actualiza coordAct constantemente 
-        elif self.threadID == hiloSubCoordActID:
-            print("SubCoordAct")  
-            
-            subCoordAct()       # sub MQTT que recibe coordAct de PiA y la almacena en SQL
-                                
-            # Debido al loop_forever del sub, este hilo puede matarse de la forma típica y debe receibir un mensaje de terminación enviado desde el hilo principal 
-            print("Terminando hilo SubCoordAct")
-    
           
 
 # Hilo princiapl que arranca los demás hilos
@@ -82,12 +70,11 @@ print("Comenzando hilo Principal")
 # Crear cada hilo
 hiloFlask = Hilo(hiloFlaskID)
 hiloPhpLiteAdmin = Hilo(hiloPhpLiteAdminID)
-hiloSubCoordAct = Hilo(hiloSubCoordActID)
 
 # Iniciar cada hilo
 hiloFlask.start() 
 hiloPhpLiteAdmin.start()
-hiloSubCoordAct.start()
+
 
 # Esperar a la señal introducida por el usuario mediante el teclado para matar a los hilos
 while True:
@@ -98,7 +85,6 @@ while True:
 
     # Si se ha recibido la señal de terminación, propagarla al resto de hilos y matar el hilo principal
     if matarHilos == 'm':
-        pubSubDisconnect()      # el hilo subCoordAct debe matarse mediante un mensaje
         break
 
 print("Terminando hilo Principal")
