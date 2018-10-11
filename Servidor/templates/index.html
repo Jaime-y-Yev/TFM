@@ -1,0 +1,47 @@
+<!-- Panel de control del usuario que permite elegir parcelas y sesiones y navega hacia las distintas páginas del usuario -->
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Panel de Control
+{% endblock %}
+
+<!-- Menús desplegables de parcelas y sesiones y enlaces a las distintas páginas del usuario -->
+{% block body %}
+
+    <!-- Este botón redirige a /crearParcela -->
+    <a href="/crearParcela" class="btn btn-primary" role="button">Crear Parcela</a> 
+ 
+    <!-- Este formulario envía un GET a /verParcela con los datos de la parcela elegida -->
+    <form action="/verParcela" method="get">
+        <div class="form-group">
+            <!-- Menú desplegable que muestra todas las parcelas del usuario actual -->
+            <select name="nombreParcela">
+                <option disabled selected value="">Elegir Parcela</option>
+                {% for nombre in nombresParcelas %}
+                    <option value="{{ nombre[0] }}">{{ nombre[0] }}</option>
+                {% endfor %}
+            </select>
+            <!-- Botón que envía el GET a /verParcela con los datos de la parcela elegida -->
+            <button class="btn btn-primary" type="submit">Ver Parcela</button>
+        </div>
+    </form>
+
+    <!-- Este formulario envía un GET a /controlRobot con los datos de la sesión elegida -->
+    <form action="/controlRobot" method="get">
+        <div class="form-group">
+            <!-- Menú desplegable que muestra todas las sesiones pendientes de todos los usuarios -->
+            <select name="sesión">
+                <option disabled selected value="">Elegir Sesión</option>
+                {% for sesion in sesionesPendientes %} 
+                    <option value="{{ sesion }}">{{ sesion[0] }}</option>
+                {% endfor %}
+            </select>
+            <!-- Botón que envía el GET a /controlRobot con los datos de la sesión elegida -->
+            <button class="btn btn-primary" type="submit">Control Robot</button>
+        </div>
+    </form>
+
+    <!-- <a href="/posRobot" class="btn btn-info" role="button">Ver Trabajos en Curso</a>  -->
+
+{% endblock %}

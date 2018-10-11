@@ -1,0 +1,270 @@
+<!-- Página de control del robot que permite establecer su modo de operación, asignarle objetivos, y ejecutar o detener la sesión -->
+
+{% extends "layout.html" %}
+
+<!-- Define el estilo del icono del robot sobre el mapa y los botones de control -->
+{% block body %}
+
+    <!-- Es estilo del icono de la posición actual del robot -->
+    <style>
+        #map {
+            position: relative;
+        }
+        .marker { 
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: url("https://memegenerator.net/img/images/50x50/15141937.jpg") no-repeat 0 0;
+        }
+    </style>
+
+    <!-- FALTAN BOTONES Y HAY QUE CAMBIARLE EL ESTILO -->
+    <div id="map" class="map"></div>
+    <div id="geo-marker" class="marker"></div>
+    <input type='button' name='modoNavegación' value='Modo Navegación' onClick='pubModo(2);'>
+    <input type='button' name='marcha' value='Marcha' onClick='pubMarchaParo(1);'>
+    <input type='button' name='paro' value='Paro' onClick='pubMarchaParo(0);'>
+
+{% endblock %}
+
+<!-- Establecer el centro del mapa -->
+{% block script1 %}
+<script>
+    var lat = 40.410;   // cambiar a valores dinámicos??
+    var lon = -3.69;
+</script>
+{% endblock %}
+
+<!-- FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF -->
+{% block script2 %}
+
+    <script>
+        
+        // Generación de puntos objetivos sobre el mapa --------------------------------------------------------------------------------------------
+
+        // Recibir las coordenadas objetivas de /controlRobot
+        var coordObjs = {{ coordObjs }};
+
+        // Crear puntos (features) con las coordenadas objetivas
+        var puntosObjs = [];
+        for (var i = 0; i < coordObjs.length; i++)
+        {            
+            puntosObjs.push(
+                new ol.Feature({
+                    geometry: new ol.geom.Point(coordObjs[i]),
+                    name: 'puntoObj'
+                })
+            );
+        }
+
+        // Crear una capa con los puntos objetivos
+        var coordObjsLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: puntosObjs
+            }),
+        });
+
+        // Añadir al mapa la capa de puntos objetivos
+        map.addLayer(coordObjsLayer);
+
+        // Al hacer click sobre un punto objetivo, enviar sus coordenadas a PiA (/controlRobot)
+        map.on("click", function(e){
+
+            // Crear un objeto JSON para la sesión y asignarle el identificador de la sesión utilizado por /controlRobot
+            var sesión = new Object();
+            sesión.idSesión = {{ idSesión }};
+
+            // Añadir al JSON las coordenadas del punto objetivo seleccionado
+            map.forEachFeatureAtPixel(e.pixel, function (feature, layer){
+                sesión.coordObj = feature.getGeometry().getCoordinates();
+            })
+
+            console.log("before Ajax coordObj = ", JSON.stringify(sesión));
+
+            // Enviar a /controlRobot los datos de la sesión a ejecutar
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(sesión), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed coordObj");    // mantenerse en la página por si hay más objetivos a realizar           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            });
+        });
+
+        
+        // Generación de la trayectoria objetiva sobre el mapa --------------------------------------------------------------------------------------------
+
+        // Recibir de /_cr la trayectoria generada por PiA
+        var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        (function () {
+            $.getJSON(
+                $SCRIPT_ROOT + "/_cr", // Ajax route (de dónde viene coordAct)
+                function(data){
+
+                    // Recoger la trayectoria generada por PiA y enviada como JSON por /_cr
+                    var trayectoriaPiA = data.trayectoria;
+
+                    // Convertir la trayectoria de PiA al formato requerido por la función crearTrayObj (un array de arrays) 
+                    var trayectoriaObj = []; 
+                    for(var i = 0; i < trayectoriaPiA.length;i++){
+
+                        // Extraer y añadir las coordenadas a trayectoriaObj
+                        var lonObj = trayectoriaPiA[i][0];
+                        var latObj = trayectoriaPiA[i][1];
+                        trayectoriaObj.push([lonObj,latObj]);
+                    }
+
+                    // Reemplazar la capa de trayectoria objetiva anterior por una nueva
+                    map.removeLayer(capaVector);
+                    crearTrayObj(trayectoriaObj);
+                }
+            );
+
+            // Actualizar la trayectoria objetiva cada 5 segundos (típicamente no cambia)
+            setTimeout(arguments.callee, 5000);
+        })();
+
+        // Crear la trayectoria objetiva sobreescribiendo la capaVector de layout.html y añadiendo los segmentos de línea de la nueva trayectoria objetiva
+        function crearTrayObj(vectorTrayectoria){
+            
+            // Reescribir la capaVector con los nuevos puntos
+            capaVector = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.LineString(vectorTrayectoria)
+                    })]
+                }),
+            });
+
+            // Añadir la nueva capaVector al mapa
+            map.addLayer(capaVector);
+        }
+        
+
+        // Botones de control del robot --------------------------------------------------------------------------------------------
+
+        // Establecer el modo de operación del robot
+        function pubModo(valor)
+        {
+            // Crear un objeto JSON para la señal de control y asignarle el modo elegido
+            var control = new Object();
+            control.modo = valor;
+
+            console.log("before Ajax control = ", JSON.stringify(control));
+
+            // Enviar a /controlRobot el modo elegido
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(control), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed modo");    // mantenerse en la página para seleccionar el punto objetivo           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            });
+        }
+
+        // Establecer la marcha o paro del robot
+        function pubMarchaParo(valor)
+        {
+            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
+            var control = new Object();
+            control.marchaOparo = valor;
+
+            console.log("before Ajax control = ", JSON.stringify(control));
+
+            // Enviar a /controlRobot la la señal de marcha o paro
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(control), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed marcha o paro");    // mantenerse en la página por si hay más objetivos a realizar           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            });
+        }
+
+
+        // Generación de la trayectoria actual sobre el mapa --------------------------------------------------------------------------------------------
+
+        // Valores iniciales de la posición del robot
+        var latRobot = 40;      
+        var lonRobot = -3;
+
+        // Crear la trayectoria actual y la capa que la contendrá
+        var trayectoriaAct = []; 
+        var capaVectorAct;
+
+        // Recibir de /_pr las coordenadas actuales provenientes de PiA
+        var $SCRIPT_ROOT = {{ request.script_root | tojson | safe }};
+        (function () {
+            $.getJSON(
+                $SCRIPT_ROOT + "/_pr", // Ajax route (de dónde viene coordAct)
+                function (data){
+
+                    // Extraer y añadir las coordenadas a trayectoriaAct
+                    latRobot = data.latr
+                    lonRobot = data.lonr
+                    trayectoriaAct.push([lonRobot, latRobot]);
+
+                    // Reemplazar la capa de trayectoria actual anterior por una nueva
+                    map.removeLayer(capaVectorAct);
+                    crearTrayAct(trayectoriaAct);
+                }
+            );
+
+            // Actualizar la trayectoria actual cada 350 milisegundos
+            setTimeout(arguments.callee, 350);
+        })();
+
+        // Crear la trayectoria actual sobreescribiendo la capaVectorAct de controlRobot.html y añadiendo los segmentos de línea de la nueva trayectoria actual
+        function crearTrayAct(vectorTrayectoria){
+
+            // Reescribir la capaVectorAct con los nuevos puntos
+            capaVectorAct = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.LineString(vectorTrayectoria)
+                    })]
+                }),
+                // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({color : [255, 0, 0, 1], width : 3})
+                })
+            });
+
+            // Añadir la nueva capaVector al mapa
+            map.addLayer(capaVectorAct);
+        }
+
+        // La posición actual del robot se representa con un icono
+        iconoPosAct = new ol.Overlay({
+            position: [-3.5, 40],       // valor inicial
+            positioning: 'top-center',
+            offset: [0, 0],
+            element: document.getElementById('geo-marker'),
+            stopEvent: false
+        });
+        map.addOverlay(iconoPosAct);
+
+        // Refrescar la posición actual cada 300 milisegundos
+        setInterval(function(){iconoPosAct.setPosition([lonRobot, latRobot])}, 300);
+        
+    </script>
+
+{% endblock %}

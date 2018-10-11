@@ -1,0 +1,113 @@
+<!-- Página de creación de parcelas que permite dibujar su geometría e introducir su nombre para enviarla a /crearParcela -->
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Crear Parcela
+{% endblock %}
+
+<!-- Recoge el nombre de la parcela creada -->
+{% block body %}
+
+    <!-- Importa el mapa de layout.html -->
+    <div id="map" class="map"></div>
+    
+    <!-- Campo para introducir el nombre de la parcela -->
+    <div class="form-group">
+        <input autocomplete="off" autofocus class="form-control" name="nombreParcela" placeholder="Introduce el nombre de la parcela" type="text"/>
+    </div>
+
+    <!-- Botón que envía la geometría y nombre de la parcela a /crearParcela, donde se subirán a la base de datos -->
+    <button id="finalizarParcela" class="btn btn-primary" type="submit">Finalizar parcela</button>
+ 
+{% endblock %}
+
+<!-- Establecer el centro del mapa -->
+{% block script1 %}
+<script>
+    var lat = 40.410;   // cambiar a valores dinámicos??
+    var lon = -3.69;
+</script>
+{% endblock %}
+
+<!-- Permite dibujar la geometría sobre el mapa y enviarla a /crearParcela -->
+{% block script2 %}
+<script>
+
+    // Cuando esté listo el documento, empezar el script
+    $(document).ready(function(){             
+
+        // Dibujar la geometría (el polígono y después la línea)
+        function addInteraction(){            
+
+            // Polígono (contorno de la parcela) que se almacena en la fuente 'source' creada en layout.html
+            var polígono = new ol.interaction.Draw({
+                source: source,
+                type: "Polygon",
+                maxPoints: 10
+            });
+            
+            // Línea (pendiente de las hileras) que se almacena en la fuente 'source' creada en layout.html
+            var línea = new ol.interaction.Draw({
+                source: source,
+                type: "LineString",
+                maxPoints: 2
+            });
+
+            // Primero dibujar el polígono
+            map.addInteraction(polígono);
+
+            // Cuando se haya terminado de dibujar el polígono, dibujar la línea
+            polígono.on("drawend", function(){
+                console.log("Se ha dibujado el polígono: ", polígono);
+                map.removeInteraction(polígono);                  
+                map.addInteraction(línea);
+            });
+            
+            // Cuando se haya terminado de dibujar el polígono, dibujar la línea
+            línea.on("drawend", function(){
+                console.log("Se ha dibujado la línea: ", línea);
+                map.removeInteraction(línea);                  
+            });
+        }
+        addInteraction();
+
+        // Al darle al botón, enviar las coordenadas del polígono y de la línea a /crearParcela
+        $('#finalizarParcela').click(function() {
+
+            // Captar la lista de features (el polígono y la línea)
+            var poli_línea = capaVector.getSource().getFeatures();
+
+            // Extraer las coordenadas del polígono y de la línea, así como el nombre de la parcela
+            var coordsPoli = poli_línea[0].getGeometry().getCoordinates()
+            var coordsLínea = poli_línea[1].getGeometry().getCoordinates()
+            var nombreParcela = document.getElementsByName("nombreParcela")[0].value
+
+            // Crear un JSON con esta información
+            var coords = new Object();
+            coords.poli = coordsPoli;
+            coords.linea = coordsLínea;
+            coords.nombreParcela = nombreParcela;
+
+            // Enviar el JSON a /crearParcela
+            console.log("Enviando las coordenadas del polígono: ", coords.poli);
+            console.log("Enviando las coordenadas de la línea: ", coords.línea);
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(coords), 
+                dataType: 'json',
+                url: '/crearParcela',
+                success: function () {
+                    window.location = "/";  // si no hay problemas, redirigir a la página de inicio
+                },
+                error: function() {
+                    alert("Error en Ajax de crearParcela.html");
+                }
+            });
+            
+        });
+    });  
+
+</script>
+{% endblock %}

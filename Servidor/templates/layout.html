@@ -1,0 +1,139 @@
+<!--
+    Layout base que se extiende con los distintos templates. Proporciona las librerías requeridas por estos templates, 
+    una barra de navegación, y en general mantiene un tema estándar entre las distintas páginas.
+    Basada en la estructura propuesta por el curso de Harvard CS50.
+-->
+
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <!-- Librerías y estilos asociados, así como títulos y encabezamientos personalizados de cada página -->
+    <head>
+
+        <!-- Meta información sobre las vistas -->
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+
+        <!-- CSS general-->
+        <link href="/static/css/styles.css" rel="stylesheet"/>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+
+        <!-- JQuery 3 -->
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+        <!-- Bootstrap 4 -->
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+
+        <!-- OpenLayers 4: necesario para los mapas -->
+        <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
+        <script src="https://openlayers.org/en/v4.6.5/build/ol.js"></script>
+
+        <!-- <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script> Needed for old environments like Internet Explorer and Android 4.x -->
+
+        <!-- Título personalizado de cada página -->
+        <title>TFM: {% block title %}{% endblock %}</title>
+
+        <!-- Encabezamiento personalizado de cada página-->
+        {% block head %}{% endblock %}
+
+    </head>
+
+    <!-- Cuerpo básico con barra de navegación, un cuerpo y scripts personalizados de cada página (en algunas páginas el cuerpo contiene un mapa) -->
+    <body>
+
+        <!-- Barra de navegación -->
+        <nav class="navbar navbar-expand-md navbar-light bg-light border">
+            <a class="navbar-brand" href="/"><span class="red">T</span><span class="gray">F</span><span class="black">M</span></a>
+            <button aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-target="#navbar" data-toggle="collapse" type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar">
+                {% if session.idUsuario %}
+                    <ul class="navbar-nav mr-auto mt-2">
+                        <li class="nav-item"><a class="nav-link" href="/crearParcela">Crear Parcela</a></li>   
+                        <li class="nav-item"><a class="nav-link" href="/verParcela">Ver Parcela</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/controlRobot">Control Robot</a></li>
+                    </ul>
+                    <ul class="navbar-nav ml-auto mt-2">
+                        <li class="nav-item"><a class="nav-link" href="/contacto">Contacto</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+                    </ul>
+                {% else %}
+                    <ul class="navbar-nav ml-auto mt-2">
+                        <li class="nav-item"><a class="nav-link" href="/crearUsuario">Crear Usuario</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login">Log In</a></li>
+                    </ul>
+                {% endif %}
+            </div>
+        </nav>
+
+<!--         {% if get_flashed_messages() %}
+            <header>
+                <div class="alert alert-primary border text-center" role="alert">
+                    {{ get_flashed_messages() | join(" ") }}
+                </div>
+            </header>
+        {% endif %} -->
+
+        <!-- Cuerpo personalizado de cada página -->
+        <main class="container p-5">
+            {% block body %}{% endblock %}
+        </main>
+        
+        <!-- Script con los valores de lon y lat que centran el mapa que viene a continuación -->
+        {% block script1 %}{% endblock %}
+
+        <!-- En caso de encontrarse en una página de mapa, mostrar dicho mapa -->
+        {% if request.path == "/verParcela" or request.path == "/crearParcela" or request.path == "/controlRobot" %}
+            
+            <!-- Mapa con una capa para la imagen digital del mapa (ráster) y las figuras que se dibujan encima (vector) -->
+            <script>
+
+                // Capa de mapas Bing con API key e imágenes de satélites
+                var capaRaster = new ol.layer.Tile({
+                    source: new ol.source.BingMaps({
+                        key: 'AquXYD2oSo4oLkBhiD46mjl2CwOTdSQWyPyQTE5_CzpQKvy8w5RvMM2NJRuvtDZk', 
+                        imagerySet: 'AerialWithLabels'
+                    })
+                });
+                
+                // Fuente donde se almacenan las geometrías dibujadas en las distintas páginas
+                var source = new ol.source.Vector({wrapX: false});
+                
+                // Capa de figuras (polígonos, líneas, puntos, etc.) que se dibujan sobre la capa ráster
+                var capaVector = new ol.layer.Vector({
+                    source: source
+                });
+
+                // Mapa con capas ráster y de vectores y una vista personalizada
+                var map = new ol.Map({
+                    layers: [capaRaster, capaVector],   // incluir en este mapa la capa de imágenes satélite y de geometrías
+                    target: 'map',
+                    view: new ol.View({                 // vista personalizada
+                        projection: "EPSG:4326",            // en lugar de EPSG:3857 por defecto (ambas en WGS-84)
+                        center: [lon, lat],         
+                        zoom: 16,
+                        maxZoom: 19
+                    })
+                });
+
+            </script>     
+
+        {% endif %}
+        
+        <!-- Script personalizado de cada página -->
+        {% block script2 %}{% endblock %}
+
+        <!-- Pie de página -->
+        <footer class="small text-center text-muted">
+            <div>Yevheniya Kupchyk</div>
+            <div>Jaime Salazar Lahera</div>
+        </footer>
+
+    </body>
+
+</html>

@@ -320,11 +320,15 @@ def verParcela():
 
         x1, y1, x2, y2 = float(x1), float(y1), float(x2), float(y2)     
 
-        midX = (x1+x2)/2        # calcular el valor medio de la coordenada x
-        midY = (y1+y2)/2        # calcular el valor medio de la coordenada y
-        
-        return render_template("verParcela.html", nombreParcela=nombreParcela, midX=midX, midY=midY)
+        xCentro = (x1+x2)/2        # calcular el valor medio de la coordenada x
+        yCentro = (y1+y2)/2        # calcular el valor medio de la coordenada y
 
+        puntoCentro = json.dumps({"xCentro": xCentro, "yCentro": yCentro})  # crear un JSON con estos valores
+        
+        # Enviar el nombre de la parcela y su punto medio (para centrar el mapa) a verParcela.html
+        return render_template("verParcela.html", nombreParcela=nombreParcela, puntoCentro=puntoCentro)
+
+ 
     # Almacenar unas nuevas coordObjs en la base de datos, asociándolas al usuario y parcela correspondientes
     elif request.method == 'POST':
         
@@ -365,7 +369,6 @@ def controlRobot():
         # Obtener los datos de la sesión elegida en el menú desplegable de index.html
         sesionElegida = request.args.get('sesión')
         tiempoId_coordObjs = sesionElegida.split(", '")
-        # tiempoId = tiempoId_coordObjs[0]   # !!!! I THINK WE WONT NEED THIS
         idSesión = sesionElegida.split(', ')[1]      
         coordObjs = tiempoId_coordObjs[1]
         coordObjs = coordObjs[:len(coordObjs)-2]
@@ -379,8 +382,18 @@ def controlRobot():
         # Recibir JSON de Ajax de controlRobot.html (puede ser una coordenada objetivo o una señal de Marcha/Paro)
         coordObj_o_control_DeAjax = request.json
         
+        # En caso de recibir un cambio de modo, enviarlo a PiA para prepararlo para navegar
+        if "modo" in coordObj_o_control_DeAjax:
+
+            # Extraer el modo del Ajax
+            modo = coordObj_o_control_DeAjax["modo"]
+            modo = json.dumps({"modo": modo})
+
+            # Enviar el JSON a PiA
+            mqttPubControl.publish('/control/', str(modo))
+
         # En caso de recibir una coordenada objetivo, enviarla a PiA junto con la geometría de la parcela correspondiente
-        if "coordObj" in coordObj_o_control_DeAjax:
+        elif "coordObj" in coordObj_o_control_DeAjax:
 
             # Extraer la sesión y la coordenada objetivo del valor recibido del Ajax
             global idSesion
@@ -407,17 +420,16 @@ def controlRobot():
             # Enviar un JSON a PiA con la coordenada objetivo y la geometría de la parcela para generar una trayectoria
             coordObj_geometria_idSesion = json.dumps({"coordObj": coordObj, "geometria": geometria, "idSesion": idSesion})
             mqttPubControl.publish('/coordObj_geometria_idSesion/', str(coordObj_geometria_idSesion))
-        
+
         # En caso de recibir una señal de Marcha/Paro, enviarla a PiA para navegar la trayectoria
         elif "marchaOparo" in coordObj_o_control_DeAjax:
 
-            # Extraer el modo y la señal de Marcha/Paro del Ajax
-            modo = coordObj_o_control_DeAjax["modo"]
+            # Extraer la señal de Marcha/Paro del Ajax
             marchaOparo = coordObj_o_control_DeAjax["marchaOparo"]
-            modo_marchaOparo = json.dumps({"modo": modo, "marchaOparo": marchaOparo})
+            marchaOparo = json.dumps({"marchaOparo": marchaOparo})
 
             # Enviar el JSON a PiA
-            mqttPubControl.publish('/control/', str(modo_marchaOparo))
+            mqttPubControl.publish('/control/', str(marchaOparo))
 
             # Abrir la conexión con la base de datos SQL
             con = sqlite3.connect('tfm.db')     
@@ -434,10 +446,18 @@ def controlRobot():
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
-@app.route('/_rc') # utilizamos formato json para proporcionar coordAct a la página "controlRobot" utilizando "_rc"
-def rc():
+@app.route('/_cr') # utilizamos formato json para proporcionar coordAct a la página "controlRobot" utilizando "_rc"
+def cr():
     
     return jsonify(trayectoria=trayectoria)
+
+
+@app.route('/_pr') # utilizamos formato json para proporcionar coordAct a la página "robotP" utilizando "_rp"
+def rp():
+    rlat = coordAct[1]
+    rlon = coordAct[0]
+    return jsonify(latr=rlat, lonr=rlon)
+
 
 
 #@app.route("/history")

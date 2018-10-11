@@ -1,0 +1,133 @@
+<!-- Página de visualización de las parcelas existentes que permite dibujar puntos objetivos (crear una sesión) y enviarlos a /verParcela -->
+
+{% extends "layout.html" %}
+
+<!-- Librería de datepick para crear un widget de calendario -->
+{% block head %}
+    <link rel="stylesheet" href="static/css/datepickk.min.css">
+    <script src="static/js/datepickk.min.js"></script>
+{% endblock %}
+
+{% block title %}Ver Parcela{% endblock %}
+
+<!-- Recoge la fecha de ejecución y envía las coordenadas objetivo a /verParcela -->
+{% block body %} 
+
+    <!-- Importa el mapa de layout.html -->
+    <div id="map" class="map"></div>
+
+    <!-- Campo que indica la fecha elegida -->
+    <div>
+        <label id="dateLabelID">Por favor elige una fecha</label> 
+    </div>
+    
+    <!-- Lanza el calendario para elegir la fecha -->
+    <button id="peticiónID" class="btn btn-primary" type="submit">Elegir Fecha</button>
+
+    <!-- Botón que envía la sesión y su fecha de ejecución a /verParcela, donde se subirán a la base de datos -->
+    <button id="submitID" class="btn btn-primary" type="submit">Enviar Petición</button>
+ {% endblock %}   
+ 
+<!-- Establecer el centro del mapa según el punto medio de la línea enviado desde Flask-->
+ {% block script1 %}
+ <script> 
+
+    // Recibir el JSON de /verParcela
+    var puntoCentro = JSON.parse({{ puntoCentro|tojson }});
+
+    // Parsear el punto medio 
+    var lon =  puntoCentro['xCentro']; 
+    var lat =  puntoCentro['yCentro'];
+
+</script>
+{% endblock %}   
+
+<!-- Permite dibujar los puntos objetivos y el tiempo de ejecución de la sesión y enviarla a /verParcela -->
+{% block script2 %}
+<script>
+
+    // Cuando esté listo el documento, empezar el script
+    $(document).ready(function(){
+
+        // Recibir el nombre de la parcela de Flask
+        var nombreParcela = {{ nombreParcela|tojson }}; 
+        
+        // Dibujar los puntos objetivos
+        function addInteraction(){
+
+            // Punto (coordenada objetivo) que se almacena en la fuente 'source' creada en layout.html
+            var draw = new ol.interaction.Draw({
+                source: source,
+                type: 'Point'
+            });
+        
+            // Dibujar los puntos
+            map.addInteraction(draw);
+        }
+        addInteraction();
+        
+        // Calendario para elegir la fecha de ejecución
+        var calendario = new Datepickk();   // nuevo objeto de calendario 
+        calendario.maxSelections = 1;       // elegir como máximo una sola fecha
+        calendario.closeOnClick = true;     // cerrar el calendario al hacer click fuera de él
+        
+        // Al cerrar el calendario, apuntar la fecha elegida
+        var fecha;  // global para recogerla en el AJAX
+        calendario.onClose = function(){
+
+            // Guardar la fecha seleccionada en el calendario en nuestra variable
+            fecha = new Date(calendario.selectedDates);
+
+            // Indicar al usuario la fecha elegida
+            document.getElementById("dateLabelID").innerHTML = "Has elegido: " + fecha;
+
+            // Convertir la fecha en el formato datetime estándar de la base de datos
+            fecha =
+                fecha.getUTCFullYear() + "-" +
+                ("0" + (fecha.getUTCMonth()+1)).slice(-2) + "-" +
+                ("0" + fecha.getUTCDate()).slice(-2) + " " +
+                ("0" + fecha.getUTCHours()).slice(-2) + ":" +
+                ("0" + fecha.getUTCMinutes()).slice(-2) + ":" +
+                ("0" + fecha.getUTCSeconds()).slice(-2);
+        };
+
+        // Mostrar el calendario al hacer click en el botón de elegir fecha
+        $('#peticiónID').click(function() {
+            calendario.show();
+        });
+
+        // Al hacer click sobre el botón, enviar las coordenadas y la fecha a /verParcela
+        $('#submitID').click(function() {
+
+            // Guardar la fecha de la sesión y el nombre de la parcela donde tendrá lugar
+            var sesión = [fecha, nombreParcela];
+
+            // Extraer los puntos de las coordenadas objetivas
+            var coordObjs = capaVector.getSource().getFeatures();
+            
+            // Añadir las coordenadas objetivas a la sesión
+            for (var i = 0; i < coordObjs.length; i++)
+            {
+                sesión.push(coordObjs[i].getGeometry().getCoordinates());
+            }
+            
+            // Enviar la sesión a /verParcela
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(sesión), 
+                dataType: 'json',
+                url: '/verParcela',
+                success: function () {
+                    window.location = "/";  // si no hay problemas, redirigir a la página de inicio
+                },
+                error: function() {
+                    alert("Error en Ajax de verParcela.html");
+                }
+            });
+
+        });
+    });
+
+</script>
+{% endblock %}   

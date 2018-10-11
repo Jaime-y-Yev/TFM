@@ -1,0 +1,36 @@
+<!-- Página de creación de usuario que acepta los datos del nuevo usuario para enviarlos a la base de datos -->
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Crear Usuario
+{% endblock %}
+
+<!-- Formulario para introducir los datos del nuevo usuario -->
+{% block body %}
+
+    <!-- El formulario envía un POST a /crearUsuario para procesar los datos -->
+    <form action="/crearUsuario" method="post">
+
+        <!-- Nombre del nuevo usuario -->
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="usuario" placeholder="Usuario" type="text"/>
+        </div>
+
+        <!-- Correo electrónico del usuario -->
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="email" placeholder="Email" type="text"/>
+        </div>
+
+        <!-- Contraseña (y confirmación) del usuario -->
+        <div class="form-group">
+            <input class="form-control" name="contraseña" placeholder="Contraseña" type="password"/>
+            <input class="form-control" name="confirmación" placeholder="Confirmar contraseña" type="password"/>
+        </div>
+        
+        <!-- Botón que envía el POST y los datos a /crearUsuario -->
+        <button class="btn btn-primary" type="submit">Crear Usuario</button>
+
+    </form>
+    
+{% endblock %}
