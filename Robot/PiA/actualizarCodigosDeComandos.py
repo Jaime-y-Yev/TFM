@@ -1,39 +1,48 @@
-# Copia los códigos de los comandos de piA para ArduinoA (comandosParaArduino.py) al header del ArduinoA (comandos.h)
+# Copia los códigos de los comandos de RPi para Arduino (comandosParaArduino.py) al encabezamiento del Arduino (comandos.h)
+# No es una función crítica del proyecto, es simplemente una herramienta de utilidad para asegurar que RPi y Arduino están de acuerdo
 
-def actualizarH():
-    carpetaPi = '/home/pi/Desktop/piA/comandosParaArduinoA.py'
-    comandosPi = open(carpetaPi,'r')
-
-    carpetaArduino = '/home/pi/Desktop/arduinoA/headers/comandos.h'
-    comandosArduino = open(carpetaArduino,'w')
-
-    copiar = False
+# Copiar las constantes de comandosParaArduino.py a comandos.h
+def actualizarEncabezamientoArduino(archivoPi, archivoArduino):
     
-    for linea in comandosPi:
+    # Leer de comandosParaArduino.py
+    comandosPi = open(archivoPi,'r')
+
+    # Escribir en comandos.h
+    comandosArduino = open(archivoArduino,'w')
+
+    # No empezar a copiar líneas de un archivo a otro hasta indicarlo
+    copiar = False
+
+    # Copiar las líneas de comandosParaArduino.py sólo en la sección delineada
+    for línea in comandosPi:
                
-        if linea == '### FINAL DE CODIGOS --- NO MODIFICAR ESTA LINEA ###\n':
+        # Dejar de copiar al llegar al final de la sección permitida
+        if línea == '### FINAL DE CÓDIGOS --- NO MODIFICAR ESTA LÍNEA ###\n':
             break
     
-        if copiar == True and linea != '\n':
+        # Copiar mientras siga permitido, ignorando las líneas en blanco
+        if copiar == True and línea != '\n':
+
+            # Ej: del el archivo .py de RPi al archivo .h de Arduino
+            #            "LEER_MODO = 10" --> "#define LEER_MODO 10"
             comandosArduino.write('#define ')
-            linea = linea.replace(" = "," ")
-            comandosArduino.write(linea)
+            línea = línea.replace(" = "," ")
+            comandosArduino.write(línea)
         
-        if linea == '### COMIENZO DE CODIGOS --- NO MODIFICAR ESTA LINEA ###\n':
+        # Empezar a copiar al llegar al principio de la sección permitida 
+        if línea == '### COMIENZO DE CÓDIGOS --- NO MODIFICAR ESTA LÍNEA ###\n':
             copiar = True
         
-
-
+    # Cerrar los dos archivos
+    comandosPi.close()
     comandosArduino.close()
 
 
+# Esta función actualiza el archivo comandos.h de Arduino pero no lo compila ni sube al Arduino
+archivoPiA = '/home/pi/Desktop/piA/comandosParaArduinoA.py'
+archivoArduinoA = '/home/pi/Desktop/arduinoA/headers/comandos.h'
 
-actualizarH() # don't forget to re-upload into Arduino!!!
+actualizarEncabezamientoArduino(archivoPiA,archivoArduinoA)
 
-##time.sleep(1)
-##
-##procesoArduino = subprocess.run(['arduino', '--upload', '/home/pi/Desktop/arduinoA/arduinoA.ino'])
-##
-##time.sleep(20)
-##
-##procesoArduino.kill()
+
+# TODO: automatizar la compilación y la subida de comandos.h al Arduino
