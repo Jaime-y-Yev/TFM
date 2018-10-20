@@ -39,8 +39,8 @@ def actualizarEncabezamientoArduino(archivoPi, archivoArduino):
 
 
 # Esta función actualiza el archivo comandos.h de Arduino pero no lo compila ni sube al Arduino
-archivoPiA = '/home/pi/Desktop/piA/comandosParaArduinoA.py'
-archivoArduinoA = '/home/pi/Desktop/arduinoA/headers/comandos.h'
+archivoPiA = '/home/pi/TFM/Robot/PiA/comandosParaArduinoA.py'
+archivoArduinoA = '/home/pi/TFM/Robot/ArduinoA/headers/comandos.h'
 
 actualizarEncabezamientoArduino(archivoPiA,archivoArduinoA)
 

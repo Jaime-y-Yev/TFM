@@ -21,9 +21,9 @@ MODO_INACTIVO = 1
 MODO_NAVEGACION = 2
 MODO_SONDEO = 3
 
-CONFIRMAR_LLEGADA = 17
+CONFIRMAR_LLEGADA = 20
 
-RECIBIR_DIRECCION_DISTANCIA_OBJ = 20
+RECIBIR_DIRECCION_DISTANCIA_OBJ = 30
 
 ### FINAL DE CÓDIGOS --- NO MODIFICAR ESTA LÍNEA ###
 
@@ -99,16 +99,19 @@ def comandoArduino(comando, valor1=None, valor2=None):
             for caracter in mensaje:
                 arduino.write(caracter.encode('utf-8'))
             
-            # Esperar a que se envíen todos los bytes del mensaje
-            while arduino.out_waiting != 0:
-                # Paralizar la función hasta que queden cero bytes en el búfer de salida
-
-            # Esperar a que se reciban todos los bytes de la respuesta
-            while arduino.in_waiting != 0:
-                # Paralizar la función hasta que queden cero bytes en el búfer de entrada
-
+            # Esperar a que se envíen todos los bytes del mensaje, paralizando la función hasta que queden cero bytes en el búfer de salida
+            while True:
+                if arduino.out_waiting == 0:
+                    break
+            
             # Leer la respuesta del Arduino para confirmar que no ha habido problemas de comuniación
             respuesta = str(arduino.readline())
+
+            # Esperar a que se reciban todos los bytes de la respuesta, paralizando la función hasta que queden cero bytes en el búfer de entrada
+            while True:
+                if arduino.in_waiting == 0:
+                    break
+
             
             # El Arduino devuelve una respuesta de la forma b'xyz', así que quitar b' del principio y ' del final
             respuesta = respuesta[2:len(respuesta)-5]   
@@ -157,11 +160,11 @@ def comandoArduino(comando, valor1=None, valor2=None):
                     if llegada == 0 or llegada == 1:
 
                         if llegada == 0:
-                            print("Comunicación serie: El Arduino NO HA LLEGADO todavía al objetivo actual ", llegada)
+                            print("Comunicación serie: El Arduino NO HA LLEGADO todavía al objetivo actual")
                         if llegada == 1:
-                            print("Comunicación serie: El Arduino HA LLEGADO al objetivo actual ", llegada)
+                            print("Comunicación serie: El Arduino HA LLEGADO al objetivo actual")
 
-                        return respuesta
+                        return llegada
                     else:
                         print("Comunicación serie: Error al leer la llegada del Arduino")
                 
@@ -195,20 +198,28 @@ def testComandos():
     while True:
            
         modoCambiado = comandoArduino(CAMBIAR_MODO, MODO_NAVEGACION)
-        print("modoCambiado = " + str(modoCambiado))
-                
-        modoLeído = comandoArduino(LEER_MODO)
-        print("modoLeído = " + str(modoLeido))
+##        print("modoCambiado = " + str(modoCambiado))
         
-        if modoLeído == MODO_NAVEGACION:
-            
-            llegada = comandoArduino(CONFIRMAR_LLEGADA)
-            print("llegada = " + str(llegada))
-
-            direcciónObj, distanciaObj = comandoArduino(RECIBIR_DIRECCION_DISTANCIA_OBJ, 123, 4567.89299999999)
-            print("direccionObj recibida = " + str(direcciónObj))
-            print("distanciaObj recibida = " + str(distanciaObj))
+        print()
+                        
+        modoLeído = comandoArduino(LEER_MODO)
+##        print("modoLeído = " + str(modoLeído))
         
         print()
 
-testComandos()
+        if modoLeído == MODO_NAVEGACION:
+            
+            llegada = comandoArduino(CONFIRMAR_LLEGADA)
+##            print("llegada = " + str(llegada))
+            
+            print()
+
+            direcciónObj, distanciaObj = comandoArduino(RECIBIR_DIRECCION_DISTANCIA_OBJ, 123, 4567.89299999999)
+##            print("direccionObj recibida = " + str(direcciónObj))
+##            print("distanciaObj recibida = " + str(distanciaObj))
+        
+        print()
+        print()
+
+
+#testComandos()
