@@ -13,23 +13,23 @@ _Bool parada = false;
 
 
 void moverRobot(int giro, float distAdesplazar, int *errorPuntero)
-//void moverRobot(float *distanciaSonarIPuntero,float *distanciaSonarDPuntero,float *distanciaSonarFIPuntero,float *distanciaSonarFDPuntero, float *distanciaSonarAPuntero,int giro,float distAdesplazar, int *errorPuntero, int *modoPuntero)
+//void moverRobot(float *distanciaSonarIPuntero,float *distanciaSonarDPuntero,float distanciaSonarFI,float *distanciaSonarFDPuntero, float *distanciaSonarAPuntero,int giro,float distAdesplazar, int *errorPuntero, int *modoPuntero)
 {
     int imprimir_nav = 1;
     Serial.println();
     
     // Definir los casos posibles donde NO hay un obstáculo o está muy lejos
-    if (*distanciaSonarFIPuntero >= DISTANCIA_GRANDE && *distanciaSonarFDPuntero >= DISTANCIA_GRANDE)
+    if (distanciaSonarFI >= DISTANCIA_GRANDE && *distanciaSonarFDPuntero >= DISTANCIA_GRANDE)
       obstaculoAdistanciaGrande = true; //
-    else if ((DISTANCIA_CORTA <= *distanciaSonarFIPuntero && *distanciaSonarFIPuntero < DISTANCIA_GRANDE) && (DISTANCIA_CORTA <= *distanciaSonarFDPuntero && *distanciaSonarFDPuntero < DISTANCIA_GRANDE))       // |-------------|-----------------|-------------|
+    else if ((DISTANCIA_CORTA <= distanciaSonarFI && distanciaSonarFI < DISTANCIA_GRANDE) && (DISTANCIA_CORTA <= *distanciaSonarFDPuntero && *distanciaSonarFDPuntero < DISTANCIA_GRANDE))       // |-------------|-----------------|-------------|
       obstaculoAdistanciaMedia = true;
     
     // Definir los casos donde hay un obstáculo cerca. Aquí empieza evitación del obstáculo
-    else if ((*distanciaSonarFIPuntero < DISTANCIA_CORTA && *distanciaSonarFIPuntero > DISTANCIA_OBSTACULO)||(*distanciaSonarFDPuntero < DISTANCIA_CORTA && *distanciaSonarFDPuntero > DISTANCIA_OBSTACULO))
+    else if ((distanciaSonarFI < DISTANCIA_CORTA && distanciaSonarFI > DISTANCIA_OBSTACULO)||(*distanciaSonarFDPuntero < DISTANCIA_CORTA && *distanciaSonarFDPuntero > DISTANCIA_OBSTACULO))
       obstaculoAdistanciaPequena = true;  
-    else if ((*distanciaSonarFIPuntero <= DISTANCIA_OBSTACULO && *distanciaSonarFIPuntero > DISTANCIA_PARADA)||(*distanciaSonarFDPuntero <= DISTANCIA_OBSTACULO && *distanciaSonarFDPuntero > DISTANCIA_PARADA))
+    else if ((distanciaSonarFI <= DISTANCIA_OBSTACULO && distanciaSonarFI > DISTANCIA_PARADA)||(*distanciaSonarFDPuntero <= DISTANCIA_OBSTACULO && *distanciaSonarFDPuntero > DISTANCIA_PARADA))
       frenteAobstaculo = true;
-    else if ((*distanciaSonarFIPuntero <= DISTANCIA_PARADA)||(*distanciaSonarFDPuntero <= DISTANCIA_PARADA))
+    else if ((distanciaSonarFI <= DISTANCIA_PARADA)||(*distanciaSonarFDPuntero <= DISTANCIA_PARADA))
       parada = true;
       //parar();
 
@@ -172,9 +172,9 @@ void moverRobot(int giro, float distAdesplazar, int *errorPuntero)
         
       // Hallar el radio de evitación
       float radio;
-      if (*distanciaSonarFIPuntero < *distanciaSonarFDPuntero)    
-        radio = *distanciaSonarFIPuntero;
-      else if (*distanciaSonarFIPuntero >= *distanciaSonarFDPuntero)
+      if (distanciaSonarFI < *distanciaSonarFDPuntero)    
+        radio = distanciaSonarFI;
+      else if (distanciaSonarFI >= *distanciaSonarFDPuntero)
         radio = *distanciaSonarFDPuntero;
       if (imprimir_nav == 1) {Serial.print("radio before loop: "); Serial.println(radio);}  
   
@@ -438,11 +438,6 @@ void moverRobot(int giro, float distAdesplazar, int *errorPuntero)
   obstaculoAdistanciaPequena = false;
   frenteAobstaculo = false;
   parada = false;
-  *distanciaSonarIPuntero = 0; 
-  *distanciaSonarDPuntero = 0;
-  *distanciaSonarFIPuntero = 0;
-  *distanciaSonarFDPuntero = 0;
-  *distanciaSonarAPuntero = 0;
   giro = 0;
   distAdesplazar = 0;
   *errorPuntero = 0;
