@@ -1,9 +1,13 @@
 import RPi.GPIO as GPIO
 from time import sleep
 
-GPIO.setmode(GPIO.BOARD)
+##GPIO.setmode(GPIO.BOARD)
+##servoPin = 12
 
-servoPin = 12
+GPIO.setmode(GPIO.BCM)
+servoPin = 18
+
+
 GPIO.setup(servoPin, GPIO.OUT)
 servoPWM = GPIO.PWM(servoPin, 50)
 servoPWM.start(0)
@@ -31,6 +35,7 @@ def revelar():
 
     print("revelando jaula")
     GPIO.output(servoPin, True)
+    global ultimoAngulo
 
     for angulo in range(ultimoAngulo, angleOut):
         duty = angulo/18 + 2
@@ -39,7 +44,6 @@ def revelar():
 
     GPIO.output(servoPin, False)
     servoPWM.ChangeDutyCycle(0)
-    global ultimoAngulo
     ultimoAngulo = angleOut
 ##    sleep(3)
 
@@ -49,6 +53,7 @@ def retraer():
     
     print("retrayendo jaula")
     GPIO.output(servoPin, True)
+    global ultimoAngulo
 
     for angulo in range(ultimoAngulo, angleIn, -1):
         duty = angulo/18 + 2
@@ -58,9 +63,10 @@ def retraer():
     GPIO.output(servoPin, False)
     servoPWM.ChangeDutyCycle(0)
 ##    sleep(3)
-    global ultimoAngulo
     ultimoAngulo = angleIn
-    
-#revelar()
-#retraer()
-#GPIO.cleanup()
+def testJaula():   
+    revelar()
+    retraer()
+    GPIO.cleanup()
+
+#testJaula()
