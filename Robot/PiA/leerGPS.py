@@ -8,7 +8,8 @@ procesoRTK = pexpect.spawn('/home/pi/RTKLIB-rtklib_2.4.3/app/rtkrcv/gcc/rtkrcv')
 
 def iniciarRTK():
     procesoRTK.expect('rtkrcv> ')
-    procesoRTK.sendline('load /home/pi/RTKLIB-rtklib_2.4.3/app/rtkrcv/gcc/rtkrcv.conf')
+    #procesoRTK.sendline('load /home/pi/RTKLIB-rtklib_2.4.3/app/rtkrcv/gcc/rtkrcv.conf')
+    procesoRTK.sendline('load /home/pi/TFM/Robot/PiA/rtkrcv.conf')
     procesoRTK.sendline('\r\n')
     
     procesoRTK.sendline('start')
@@ -37,8 +38,7 @@ def obtenerCoordAct():
     archivoSalidaRTK = '/home/pi/output.data'
     tamanoArchivoPrev = 0
     tamanoArchivo = os.path.getsize(archivoSalidaRTK)
-    
-    #coordAct = [0,0]
+    coordAct = [0,0]
            
     if tamanoArchivo > tamanoArchivoPrev:
         
@@ -63,7 +63,9 @@ def obtenerCoordAct():
             lonAct = salidaRTK.read(12)
             lonAct = lonAct.decode('utf-8')
             
-            coordAct = [float(latAct), float(lonAct)]
+            #coordAct = [float(latAct), float(lonAct)]
+            coordAct = [float(lonAct), float(latAct)]
+
         
         else:
             

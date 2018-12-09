@@ -41,10 +41,10 @@ class Hilo(threading.Thread):
         if self.threadID == hiloFlaskID: 
             print("Flask")
 
-            os.environ["FLASK_DEBUG"] = "0"     # no arrancar en modo de depuración
-
+            os.environ["FLASK_DEBUG"] = "False" # No arrancar en modo de depuración
             # Arrancar el proceso Flask mediante PowerShell
-            flaskProceso = subprocess.Popen(['powershell.exe','python','app.py'], cwd='c:/users/y/documents/trabajofinmaster/tfm/servidor')
+            flaskProceso = subprocess.Popen('powershell.exe flask run --host=0.0.0.0 --port=8080 --no-reload') # make debug false
+            #flaskProceso = subprocess.Popen(['powershell.exe','python','app.py'], cwd='c:/users/y/documents/trabajofinmaster/tfm/servidor')
 
             matarHilo(flaskProceso)             # esperar a la señal para matar al proceso de Flask
             
@@ -56,7 +56,7 @@ class Hilo(threading.Thread):
             print("phpLiteAdmin")  
 
             # Arrancar el proceso de phpLiteAdmin mediante PowerShell
-            phpLiteAdminProceso = subprocess.Popen(['powershell.exe','c:/MAMP/bin/php/php7.2.1/php.exe', '-S 0.0.0.0:80'], cwd='c:/MAMP/bin/phpliteAdmin')
+            phpLiteAdminProceso = subprocess.Popen(['powershell.exe','c:/MAMP/bin/php/php7.2.1/php.exe', '-S 0.0.0.0:90'], cwd='c:/MAMP/bin/phpliteAdmin')
             
             matarHilo(phpLiteAdminProceso)      # esperar a la señal para matar al proceso de phpLiteAdmin
 

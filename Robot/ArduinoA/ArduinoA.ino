@@ -1,8 +1,9 @@
-// DEFINICIONES LAS VARIABLES UTILIZADO EN ARDUINOA-------------------------------------------------------------------------------------------------------------------
-
-// Demonstración
-int imprimir = 0; // 0 = no imprimir cuando hay comunicación activa con PiA; 1 = imprimir distancias y variables dentro de ArduinoA cuando no hay comunicación con PiA
-int imprimir_nav = 0;
+// Depuración
+#define IMPRIMIR  false
+#define IMPRIMIR_MAG false
+#define IMPRIMIR_SONARS false
+#define IMPRIMIR_MOTORES false
+#define IMPRIMIR_NAV false
 
 // Comandos de RPi
 #include "headers/comandos.h"
@@ -11,26 +12,39 @@ char mensaje[LONGITUD_MENSAJE];
 int comando;
 
 // Modo de operación
+<<<<<<< HEAD
 int modo = MODO_NAVEGACION;         // empezar en modo de parada
 int *modoPuntero = &modo;
 _Bool navegacionManual = true;
+=======
+int modo = MODO_INACTIVO;// empezar en modo de parada
+//int modo = MODO_MANUAL;
+int *modoPuntero = &modo;
+int casoNavegacion = 0;
+int *casoNavegacionPuntero = &casoNavegacion;
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 
 // Controlador de motores
 #include <SoftwareSerial.h>
+SoftwareSerial serial(2, 3);    // 2(was 10) to S2 and 3 (was 11) to S1
 #include "RoboClaw.h"
+<<<<<<< HEAD
 #define DIRECCION_MEMORIA_RC 0x80
 #define V_LENTA 30 //30
 #define V_NORMAL 50 //50
 #define V_RAPIDA 60 //80
 #define PORCENTAJE 0.6 // 0.6
 SoftwareSerial serial(10, 11);    // 10 to S2 and 11 to S1
+=======
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 RoboClaw rc(&serial, 10000);
+#define DIRECCION_MEMORIA_RC 0x80
 
-// Magnetometro
+// Magnetómetro
 #include <Wire.h>
 #include <Adafruit_LSM303.h>
-#define ANGULO_DEC 0.011635528
 Adafruit_LSM303 lsm;
+<<<<<<< HEAD
 // Direcciones
 #define IZQUIERDA 'I'
 #define DERECHA 'D'
@@ -53,49 +67,96 @@ char giroPreobstaculo; /////////////////////////////////////////
 char *giroPreobstaculoPuntero = &giroPreobstaculo;
 // TODO CREATE LINKED LIST
 int memoriaGIRO[20];
+=======
+#define ANGULO_DEC 0.011635528
+
+// Parámetros de movimiento
+int velocidad;
+#define VEL_LENTA 1400  
+#define VEL_NORMAL 1700 
+#define VEL_RAPIDA 2000 
+#define VEL_PORCENTAJE 0.2 
+#define ACELERACION 1000
+
+int giro;
+#define GIRO_IZQUIERDA 'I'
+#define GIRO_DERECHA 'D'
+#define GIRO_RECTO 'R'
+#define GIRO_ATRAS 'A'
+//int memoriaGIRO[20];  // TODO: CREATE LINKED LIST
+
+int desp; 
+int *despPuntero = &desp;
+#define DESP_POSITIVO 0
+#define DESP_NEGATIVO 1
+#define DESP_GIRO 2
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 
 int direccionAct = 0;
 int *direccionActPuntero = &direccionAct;
-int errorDireccion = 0; 
-int *errorDireccionPuntero = &errorDireccion;
+int direccionObj = 0; //205 simu just Arduino                        // CAMBIAR EN SIMULACIÓN------------------------------------------------------------
+int *direccionObjPuntero = &direccionObj;
+#define TOL_DIRECCION 7
+//int errorDireccion = 0; 
+//int *errorDireccionPuntero = &errorDireccion;
 
 // Sonar
-#define TRIGFI 2
-#define ECHOFI 3
-#define TRIGFD 8
-#define ECHOFD 9
-#define TRIGA 4
-#define ECHOA 5
-#define TRIGI 6
-#define ECHOI 7
-#define TRIGD 12 
-#define ECHOD 13
-#define M_SONARFI 0.0177
-#define B_SONARFI -0.8338
-#define M_SONARFD 0.0178
-#define B_SONARFD -0.3905
-#define M_SONARA 0.0178
-#define B_SONARA -0.9843
-#define M_SONARI 0.0177
-#define B_SONARI -0.3467
-#define M_SONARD 0.0177 
-#define B_SONARD -0.0027 
+#include <math.h>
 
 float distanciaSonarFI = 0.0;
 float *distanciaSonarFIPuntero = &distanciaSonarFI;
+#define TRIG_FI 4
+#define ECHO_FI 5
+#define M_FI 0.0177
+#define B_FI -0.8338
+
 float distanciaSonarFD = 0.0;
 float *distanciaSonarFDPuntero = &distanciaSonarFD;
+#define TRIG_FD 6
+#define ECHO_FD 7
+#define M_FD 0.0178
+#define B_FD -0.3905
+
+float distanciaSonarI1 = 0.0; 
+float *distanciaSonarI1Puntero = &distanciaSonarI1;
+#define TRIG_I1 8
+#define ECHO_I1 9
+#define M_I1 0.0177
+#define B_I1 -0.3467
+
+float distanciaSonarI2 = 0.0; 
+float *distanciaSonarI2Puntero = &distanciaSonarI2; 
+#define TRIG_I2 10
+#define ECHO_I2 11
+#define M_I2 0.0177
+#define B_I2 -0.3467
+
+float distanciaSonarD1 = 0.0; 
+float *distanciaSonarD1Puntero = &distanciaSonarD1;
+#define TRIG_D1 12
+#define ECHO_D1 13
+#define M_D1 0.0177 
+#define B_D1 -0.0027 
+
+float distanciaSonarD2 = 0.0; 
+float *distanciaSonarD2Puntero = &distanciaSonarD2;
+#define TRIG_D2 14 
+#define ECHO_D2 15
+#define M_D2 0.0177 
+#define B_D2 -0.0027 
+
 float distanciaSonarA = 0.0; 
 float *distanciaSonarAPuntero = &distanciaSonarA;
-float distanciaSonarI = 0.0; 
-float *distanciaSonarIPuntero = &distanciaSonarI;  
-float distanciaSonarD = 0.0; 
-float *distanciaSonarDPuntero = &distanciaSonarD;
+#define TRIG_A 16
+#define ECHO_A 17
+#define M_A 0.0178
+#define B_A -0.9843
 
-//---- Distancias cuando el robot está entre filas
-#define DISTANCIA_FILA 0.25                  // (en campo = 0.5) distancia que determina si estás en una fila o no
-#define TOL_DISTANCIA 0.25                   // tolerancia de distancia para el modo entre filas
+//---- Distancias cuando el robot está entre filas utilizando sensor D1 y F1
+#define DISTANCIA_FILA 0.95                 // (en campo = 0.5) distanciaPerpendicular a fila que determina si estás en una fila o no. DistanciaFilaDiagonal = distanciaPerpendicular/cos(45)
+#define TOL_ENTREFILAS 0.05
 
+<<<<<<< HEAD
 // Distancias de evitación de obstáculos
 #define DISTANCIA_GIRO_MIN 0.5              //0.5 // !distancia min para girar 
 #define DISTANCIA_GRANDE 10                //2.0//(en campo = 10) /////////////////////////////////
@@ -107,10 +168,31 @@ float *distanciaSonarDPuntero = &distanciaSonarD;
 #define RATIO_DIST_ENCODER_2 0.00914
 
 float distanciaObj = 3;                      // distancia recibida de Pi ------------------------------------------------------------------------------
+=======
+// Distancias de evitación de obstáculos con sensores FI FD
+#define DISTANCIA_GIRO_MIN 0.5              //0.5 // !distancia min para girar 
+#define DISTANCIA_GRANDE 10                //2.0//(en campo = 10) /////////////////////////////////
+#define DISTANCIA_CORTA 0.4                //1.0//(en campo = 3)
+#define DISTANCIA_OBSTACULO 0.25             //0.4//(en campo = 1)   el robot intenta a evitar el obstáculo a esta distancia
+#define DISTANCIA_PARADA 0.15                //0.2//(en campo = 0.2) el robot para completamente a esta distancia de un obstáculo 
+
+#define DISTANCIA_LADO_SEGURO 0.225 
+#define DISTANCIA_LADO_DIAGONAL_SEGURO 0.19
+
+#define RATIO_DIST_ENCODER_1 0.00918
+#define RATIO_DIST_ENCODER_2 0.00914
+
+float distanciaObj = 0; // 1.5 simu just Arduino                     // distancia recibida de Pi ------------------------------------------------------------------------------
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 float *distanciaObjPuntero = &distanciaObj; 
-float distanciaAct = 0;                      // distancia desplazada por el robot según los encoders
+float distanciaAct = 0.01;                      // distancia desplazada por el robot según los encoders
 float *distanciaActPuntero = &distanciaAct;
+<<<<<<< HEAD
 int llegada = 0;                             // llegada = 1, Arduino listo para recibir comandos; llegada = 0, Arduino NO listo para recibit comandos
+=======
+#define TOL_DISTANCIA 0.2            // tolerancia grados a girar
+int llegada = 1;      // 0 simu just Arduino                       // llegada = 1, Arduino listo para recibir comandos; llegada = 0, Arduino NO listo para recibit comandos
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 int *llegadaPuntero = &llegada;
 
 
@@ -118,8 +200,11 @@ void setup()
 {
   // Inicializar los sensores y comunicaciones serie
   Serial.begin(115200);
+  
   lsm.begin();
+  
   rc.begin(38400);
+<<<<<<< HEAD
 
   pinMode(TRIGFI, OUTPUT);
   pinMode(ECHOFI, INPUT);
@@ -132,14 +217,43 @@ void setup()
   pinMode(TRIGD, OUTPUT);
   pinMode(ECHOD, INPUT);
   delay(500); // for prints
+=======
+  rc.ResetEncoders(DIRECCION_MEMORIA_RC); 
+  
+  pinMode(TRIG_FI, OUTPUT);
+  pinMode(ECHO_FI, INPUT);
+  pinMode(TRIG_FD, OUTPUT);
+  pinMode(ECHO_FD, INPUT);
+  pinMode(TRIG_A, OUTPUT);
+  pinMode(ECHO_A, INPUT);
+  pinMode(TRIG_I1, OUTPUT);
+  pinMode(ECHO_I1, INPUT);
+  pinMode(TRIG_I2, OUTPUT);
+  pinMode(ECHO_I2, INPUT);
+  pinMode(TRIG_D1, OUTPUT);
+  pinMode(ECHO_D1, INPUT);
+  pinMode(TRIG_D2, OUTPUT);
+  pinMode(ECHO_D2, INPUT);
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 }
 
 void loop()
 {
+<<<<<<< HEAD
   //COMUNICACIÓN CON PiA PARA NAVEGAR-------------------------------------------------------------------------------------------------------------------------
 
   erroresMotor();
   
+=======
+  if (IMPRIMIR) {Serial.print(F("-------  MAIN LOOP ---------")); Serial.print(F(" MODO = ")); Serial.println(modo);}
+
+  //COMUNICACIÓN CON PiA PARA NAVEGAR-------------------------------------------------------------------------------------------------------------------------
+  erroresMotor();
+
+  //leerVelocidad();  
+  // Sonars
+  leerSonars();
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
   delay(200); // esperar un poco para iniciar la comunicación serie sin errores
   
   // Recibir mensajes de PiA, decodificarlos, y hacer una conversión a forma útil----------------------------------
@@ -151,22 +265,30 @@ void loop()
     mensaje[i] = '\0';                            // convierte mensaje a string
   }
   else
-     memset(mensaje, 0, sizeof(mensaje));         // vaciar el mensaje (reinicializarlo a todo 0's) 
+  {
+     memset(mensaje, '\0', sizeof(mensaje));         // vaciar el mensaje (reinicializarlo a todo 0's) 
+     memset(comando, '\0', sizeof(comando));         // vaciar el comando (reinicializarlo a todo 0's) 
+  }
   
   comando = (int)convertirAfloat(mensaje, 1, 0);  // conversión del mensaje de string a float
   
-  // Mandar mensajes a PiA ------------------------------------------------------------------------------------------
-  
+  // Responder a comandos de PiA ------------------------------------------------------------------------------------------
+      // Mandar el estado de variable llegada a PiA. En PiA este variable = llegadaArduinoA
+  if (comando == CONFIRMAR_DATOS)           
+  {
+    String respuesta = 'X' + String(llegada) + String(casoNavegacion) + String(direccionAct) + 'x'; 
+    Serial.println(respuesta);
+    Serial.flush();
+  }
   // ArduinoA informa PiA de su modo 
   if (comando == LEER_MODO)
   {
     String respuesta = 'X' + String(modo) + 'x';  // eco el comando a PiA con caracteres de inciación y terminación
     Serial.println(respuesta);
     Serial.flush();
-  }  
-  
+  }   
   // Cambiar el modo de Arduino
-  if (comando == CAMBIAR_MODO)
+  else if (comando == CAMBIAR_MODO)
   {
      *modoPuntero = mensaje[2] - '0';         
      String respuesta = 'X' + String(modo) + 'x';  // eco el comando a PiA con caracteres de inciación y terminación
@@ -175,27 +297,36 @@ void loop()
   }   
 
   // Modo Inactivo y Modo Emergencia:---------------------------------------------------------------------------------
-  if (modo == MODO_INACTIVO || modo == MODO_EMERGENCIA)
+  if (modo == MODO_EMERGENCIA)
   {
+    if (IMPRIMIR) Serial.println(F("Modo EMEREGNCIA"));
+    parar();                                  // el robot siempre para
+    llegada = 0;                              // el robot NO está listo para recibir comandos de dirección y distancia
+    rc.ResetEncoders(DIRECCION_MEMORIA_RC);   // reseteo de los encoders
+    *direccionObjPuntero = 0;                 // reseteo de variable dirección
+    *distanciaObjPuntero = 0.00;              // reseteo de variable distancia
+    *casoNavegacionPuntero = 9;             
+  }
+  else if (modo == MODO_INACTIVO)
+  {
+    if (IMPRIMIR) Serial.println(F("Modo INACTIVO "));
     parar();                                  // el robot siempre para
     llegada = 1;                              // el robot está listo para recibir comandos de dirección y distancia
     rc.ResetEncoders(DIRECCION_MEMORIA_RC);   // reseteo de los encoders
     *direccionObjPuntero = 0;                 // reseteo de variable dirección
     *distanciaObjPuntero = 0.00;              // reseteo de variable distancia
+    *casoNavegacionPuntero = 9;             
   }
   
   // Modo Navegacición------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
   if (modo == MODO_NAVEGACION) ////// WAS ELSE IF
+=======
+  else if (modo == MODO_NAVEGACION || modo == MODO_SONDEO)
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
   {
-    // Mandar el estado de variable llegada a PiA. En PiA este variable = llegadaArduinoA
-    if (comando == CONFIRMAR_LLEGADA)           
-    {
-      String respuesta = 'X' + String(llegada) + 'x'; 
-      Serial.println(respuesta);
-      Serial.flush();
-    }
-    // Recibir dirección y distancia comandos si llegada = 1
-    else if (comando == RECIBIR_DIRECCION_DISTANCIA_OBJ)
+   // Recibir dirección y distancia
+   if (comando == RECIBIR_DIRECCION_DISTANCIA_OBJ)
     {
       rc.ResetEncoders(DIRECCION_MEMORIA_RC);                             // resetear encoders
 
@@ -210,7 +341,9 @@ void loop()
       llegada = 0;                                                         // resetear llegada a 0 para no recibir nuevos comandos mientras el desplazamiento
     }
 
+ 
 
+<<<<<<< HEAD
     // LEER SENSORES PARA DESPLAZAR SEGÚN DIRECCIÓNES DE PiA--------------------------------------------------------------------------------------------------------------
 
     
@@ -231,12 +364,13 @@ void loop()
 //      modo = MODO_INACTIVO;
 //    }
 //     Leer magnetometro---------------------------------------------------------------------------------------------
+=======
+    // Magnetómetro
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
     leerMagnetometro();                                                      
-    if (imprimir ==1)
-    {
-      Serial.println(direccionAct);
-    }
+    if (IMPRIMIR) {Serial.print(F("direccionObj = ")); Serial.print(direccionObj); Serial.print(F(" direccionAct = ")); Serial.println(direccionAct);}
 
+<<<<<<< HEAD
     // Calcular cuanto hirar sabiendo la dirección corriente y dirección obj------------------------------------------
     char giro = calcularGiro();                                              
     if (imprimir ==1)
@@ -288,6 +422,42 @@ void loop()
     {
       navManual(mensaje); 
     }
+=======
+    // Calcular cuanto girar sabiendo la dirección corriente y dirección obj------------------------------------------
+    giro = calcularGiro();                                              
+    if (IMPRIMIR) {Serial.print(F("giroMAIN = "));  Serial.print((char)giro); Serial.print(F("  direccionObj = "));  Serial.print(direccionObj); Serial.print(F("  direccionAct = "));  Serial.println(direccionAct); Serial.println();}
+
+    // Leer encoder y calcular distancia viajada multiplicando este numero por un ratio para convertir a metros------
+    calcularDistanciaAct();    
+    if (IMPRIMIR) {Serial.print(F("distanciaObj = "));  Serial.println(distanciaObj); Serial.print(F("distanciaAct = "));  Serial.println(distanciaAct);}
+
+    // Calcular distancia a desplazar---------------------------------------------------------------------------------
+    float distAdesplazar = distanciaObj - distanciaAct;
+    if (IMPRIMIR) {Serial.print(F("distAdesplazar = "));  Serial.println(distAdesplazar);}
+    
+    if (distAdesplazar <= 0.00 || (distanciaAct > 0.7&&distanciaAct <= 1.0))   // al desplazar la distancia necesaria, cambiar llegada a 1 para obtener nuevos comandos y para corregir su posición
+    {
+      if (IMPRIMIR) Serial.println(F("-------------------------ARRIVED ------------------------------"));
+      llegada = 1;             
+      pararadaSuave();
+      rc.ResetEncoders(DIRECCION_MEMORIA_RC);   // reseteo de los encoders .....
+      *direccionObjPuntero = 0;                 // reseteo de variable dirección/....
+      *distanciaObjPuntero = 0.00;              // reseteo de variable distancia....
+      //*modoPuntero = MODO_INACTIVO; //////// TESTING 
+    }
+    // Mover el robot teniendo en cuenta distancia, dirección, y obstáculos--------------------------------------------
+    if (distAdesplazar > 0.00 && llegada == 0)
+    {
+      navegacionAutomatica(giro, distAdesplazar, modoPuntero, casoNavegacionPuntero, despPuntero);
+    }
+  }
+  else if (modo == MODO_MANUAL)
+  {
+    if (distanciaSonarFI <= DISTANCIA_PARADA || distanciaSonarFD <= DISTANCIA_PARADA)
+      parada(); 
+    if (comando == RECIBIR_COMANDO_MANUAL)
+      navegacionManual(mensaje); 
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
   }
 }
 
@@ -315,8 +485,11 @@ void navManual(char mensaje[])
       rc.ResetEncoders(DIRECCION_MEMORIA_RC);
 }
 
+<<<<<<< HEAD
     
 
+=======
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b
 // Convertir array a float
 float convertirAfloat(char mensaje[], int numDigitos, int comienzoMensaje)
 {
@@ -330,6 +503,7 @@ float convertirAfloat(char mensaje[], int numDigitos, int comienzoMensaje)
 
   return atof(vector);             // devolver el mensaje en formato float
 }
+<<<<<<< HEAD
 
 void erroresMotor(void)
 {
@@ -361,3 +535,5 @@ void erroresMotor(void)
 
   if (error) *modoPuntero = MODO_EMERGENCIA;
 }
+=======
+>>>>>>> 93462edc90cdde05c78d7729129c29b0a0eb9f5b

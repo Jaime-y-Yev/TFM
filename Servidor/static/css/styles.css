@@ -49,3 +49,119 @@ main img
     /* constrain images on small screens */
     max-width: 100%;
 }
+
+
+/* Bootsnips stuff starts here */
+
+/*body{
+    margin-top:10px;
+    background: #e0e0e0;
+}*/
+
+.container-p-5{
+    position: relative;
+    left: -230px;
+    top: 30px;
+    align-items: left;
+    justify-content: left;
+}
+
+.container-p-6{
+    position: relative;
+    left: 230px;
+    top: -170px;
+    align-items: right;
+    justify-content: right;
+}
+
+.container-p-7{
+    position: relative;
+    left: 400px;
+    top: 0;
+    align-items: right;
+    justify-content: right;
+}
+
+.row{
+    display: flex;
+    align-items: left;
+    justify-content: left;
+}
+.row div{
+    width: 400px;
+    height: 40px;
+}
+
+.row2{
+    display: flex;
+    align-items: left;
+    justify-content: left;
+}
+.row2 div{
+    width: 200px;
+    height: 40px;
+}
+
+.update-title{
+    display: inline-block;
+    font-size: 20px;
+    text-align: center;
+    background-color: #fff;
+    height: 40px;
+    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2);
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+    margin-bottom: 10px;
+    position: relative;
+  }
+  
+.update-nag{
+  display: inline-block;
+  font-size: 14px;
+  text-align: left;
+  background-color: #fff;
+  height: 40px;
+  -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2);
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.update-nag:hover{
+    cursor: pointer;
+    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.4);
+  box-shadow: 0 1px 1px 0 rgba(0,0,0,.3);
+}
+
+.update-nag > .update-split{
+  background: #337ab7;
+  width: 33px;
+  float: left;
+  color: #fff!important;
+  height: 100%;
+  text-align: center;
+}
+
+.update-nag > .update-split > .glyphicon{
+  position:relative;
+  top: calc(50% - 9px)!important; /* 50% - 3/4 of icon height */
+}
+.update-nag > .update-split.update-success{
+  background: #5cb85c!important;
+}
+
+.update-nag > .update-split.update-danger{
+  background: #d9534f!important;
+}
+
+.update-nag > .update-split.update-info{
+  background: #5bc0de!important;
+}
+
+
+
+.update-nag > .update-text{
+  line-height: 19px;
+  padding-top: 11px;
+  padding-left: 45px;
+  padding-right: 20px;
+}

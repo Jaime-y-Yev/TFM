@@ -42,7 +42,24 @@ def actualizarEncabezamientoArduino(archivoPi, archivoArduino):
 archivoPiA = '/home/pi/TFM/Robot/PiA/comandosParaArduinoA.py'
 archivoArduinoA = '/home/pi/TFM/Robot/ArduinoA/headers/comandos.h'
 
+print("Actualizando encabezamiento del Arduino")
 actualizarEncabezamientoArduino(archivoPiA,archivoArduinoA)
 
 
 # TODO: automatizar la compilación y la subida de comandos.h al Arduino
+
+import subprocess
+from time import sleep
+
+#arduino-cli compile -b arduino:avr:uno /home/pi/TFM/Robot/ArduinoA        
+#arduino-cli upload -b arduino:avr:uno /home/pi/TFM/Robot/ArduinoA -p /dev/ttyACM0
+
+print("Compilando el Arduino")
+procesoCompilacion = subprocess.Popen('arduino-cli compile -b arduino:avr:uno /home/pi/TFM/Robot/ArduinoA', shell = True)
+sleep(10)
+procesoCompilacion.kill()
+
+print("Subiendo el Arduino")
+procesoSubida = subprocess.Popen('arduino-cli upload -b arduino:avr:uno /home/pi/TFM/Robot/ArduinoA -p /dev/ttyACM0', shell = True)
+sleep(10)
+procesoSubida.kill()

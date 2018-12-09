@@ -76,7 +76,7 @@
         $('#finalizarParcela').click(function() {
 
             // Captar la lista de features (el polígono y la línea)
-            var poli_línea = capaVector.getSource().getFeatures();
+            var poli_línea = capaGeom.getSource().getFeatures();
 
             // Extraer las coordenadas del polígono y de la línea, así como el nombre de la parcela
             var coordsPoli = poli_línea[0].getGeometry().getCoordinates()

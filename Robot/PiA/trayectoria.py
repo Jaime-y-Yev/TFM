@@ -16,15 +16,19 @@ def pendiente(linea): # linea = [[x1,y1],[x2,y2]]
 
 # Hallar la intersección con el eje y
 def yint(punto, pendiente):
-    
-    # Extraer las coordenadas individuales del "punto"
-    x = punto[0]
-    y = punto[1]
-    
-    # Utilizar los puntos extraidos en el paso previo para calcular la intersección
-    yinter = y - pendiente*x # y1 = mx1 + b => b = y1-mx1 
-    
-    return yinter
+	
+	print("punto: " ,punto)
+	print("type punto: " ,type(punto))
+
+
+	# Extraer las coordenadas individuales del "punto"
+	x = punto[0]
+	y = punto[1]
+
+	# Utilizar los puntos extraidos en el paso previo para calcular la intersección
+	yinter = y - pendiente*x # y1 = mx1 + b => b = y1-mx1 
+
+	return yinter
 
 # Averiguar si c esta enre a y b donde a y b son los puntos de contorno y c es una intersección 
 def entrePuntos(a,b,c):
@@ -189,185 +193,197 @@ def crearPuntosIntermedios(geometría,poliEc,coordAct,coordObj):
     if len(interseccionesAct) != 0 and len(interseccionesObj) == 0: # Sólo existe intersecciones que pasan por coordAct
         print("Intersecciones de coordAct encontrados")
 
-        puntosIntermedios = hallarPuntosIntermedios(interseccionesAct, poliLine['poli'], 'A')
+        puntosIntermedios = hallarPuntosIntermedios(interseccionesAct, geometría['poli'], 'A')
     
     if len(interseccionesAct) == 0 and len(interseccionesObj) != 0: # Sólo existe intersecciones que pasan por coordObj
         print("Intersecciones de coordObj encontrados")
 
-        puntosIntermedios = hallarPuntosIntermedios(interseccionesObj, poliLine['poli'], 'O')
+        puntosIntermedios = hallarPuntosIntermedios(interseccionesObj, geometría['poli'], 'O')
     
     return puntosIntermedios
 
 # Probar todas las posibles rotaciones de la lista de puntos intermedios para calcular la trayectoria con la menor distancia total
 def construirTrayectoria(puntosIntermedios, coordAct, coordObj):   
 
-    print("puntosIntermedios = ", puntosIntermedios)
-    print("En construirTrayectoria: coordAct = ", coordAct)
-    print("En construir Trayectoria: coordObj = ", coordObj)
-    
-    from navegacion import distancia 
-    
-    # Hallar distancia entre un punto de puntos intermedios y la proxima de la lista
-    def distanciaTotal(lista, indexPuntoObj):
-        d = 0
-        for i in range(indexPuntoObj):
-            d = d + distancia(lista[i],lista[i+1])
-        
-        return d
+	print("puntosIntermedios = ", puntosIntermedios)
+	print("En construirTrayectoria: coordAct = ", coordAct)
+	print("En construir Trayectoria: coordObj = ", coordObj)
 
-    # Hallar punto más cercana si no existe intersecciones que pasan por coordAct y/o coordObj o ningún de ellos
-    def sustituirPuntoFaltado(puntoA,puntoB,coordObj_o_Act):
-            
-        # Hallar distancias entre puntos intermedios y coordAct y/o coordObj (el punto que NO tiene intersecciones con el contorno)
-        distancias = []
-        for coord in puntosIntermedios:
-            dist = distancia(coordObj_o_Act,coord)
-            distancias.append([dist,coord]) # No olvidar escribir el punto que da la distancia, no sólo la distancia
-        
-        # En la lista de distancias elegir la distancia más pequeña y asignar ella a puntoA que falta
-        minimum = distancias[0][0]
-        for i in range(len(distancias)-1):
-            if distancias[i][0] < minimum:
-                print("en bucle de contruirTrayectoria, comparando distancias" +str(i))
-                minimum = distancias[i][0]
-                puntoA = distancias[i][1]
+	from navegacion import distancia 
 
-        return puntoA    
+	# Hallar distancia entre un punto de puntos intermedios y la proxima de la lista
+	def distanciaTotal(lista, indexPuntoObj):
+		d = 0
+		for i in range(indexPuntoObj):
+			d = d + distancia(lista[i],lista[i+1])
+		
+		return d
 
-    
-    # Iniciar algunas variables utilizadas en el próximo paso
-    counterA = 0
-    counterO = 0
-    actA = 0
-    actB = 0
-    objA = 0
-    objB = 0
-    
-    # Asignar un lado A o B a los puntos intermedios (intersecciones que pasan por coordAct y coordObj)
-    for punto in puntosIntermedios:
-        if len(punto) == 3:
-            if punto[2] == "A":
-                if counterA == 0:
-                    actA = punto
-                    counterA = 1
-                elif counterA == 1:
-                    actB = punto
-            if punto[2] == "O":
-                if counterO == 0:
-                    objA = punto    
-                    counterO = 1
-                elif counterO == 1:
-                    objB = punto
-       
-    # Si no hay intersecciones que pasan por coordAct o coordObj, llamar una función que encuentra un punto más cercano que se puede utilizar como parte de la trayectoria
-    if actA == 0 and actB == 0:
-        actA = sustituirPuntoFaltado(actA,actB,coordAct)  # llamamos la función con los puntos que NO tenemos (actA y/o actB en este caso)
-        actB = actA
-    if objA == 0 and objB == 0:
-        objA = sustituirPuntoFaltado(objA,objB,coordObj) # llamamos la función con los puntos que NO tenemos (objA y/o objB en este caso)
-        objB = objA
-        
-    print("actA final = ", actA)
-    print("actB final = ", actB)
-    print("objA final = ", objA)
-    print("objB final = ", objB)
-    
-    # -----Rotar la lista de puntosIntermedios, creando trayectorias posibles, y elegir más eficiente-----   
-    
-    # --Crear listas de punto actual a objetivo en ordenen horario:--
-    
-    # Obtener la posición de actA y actB (las intersecciónes la línea que pasa por coordAct con el contorno) en la lista en orden horario
-    indexActA = puntosIntermedios.index(actA)
-    indexActB = puntosIntermedios.index(actB)    
-    
-    # Rotar la lista para empezar la trayectoria de actA 
-    aHorario = puntosIntermedios[indexActA:] + puntosIntermedios[:indexActA]    
-    # Obtener la posición de objA y objB (las intersecciónes la línea que pasa por coordObj con el contorno) en la lista en orden horario que empieza en actA
-    indexObjA = aHorario.index(objA)
-    indexObjB = aHorario.index(objB)
-    # Opción 0: Se sale por lado A de la línea que pasa por coordAct y se llega a lado A de coordObj
-    distancia0 = distanciaTotal(aHorario,indexObjA) + distancia(coordAct,actA) + distancia(coordObj,objA)
-    # Opción 1: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
-    distancia1 = distanciaTotal(aHorario,indexObjB) + distancia(coordAct,actA) + distancia(coordObj,objB)
+	# Hallar punto más cercana si no existe intersecciones que pasan por coordAct y/o coordObj o ningún de ellos
+	def sustituirPuntoFaltado(puntoA,puntoB,coordObj_o_Act):
+			
+		# Hallar distancias entre puntos intermedios y coordAct y/o coordObj (el punto que NO tiene intersecciones con el contorno)
+		distancias = []
+		for coord in puntosIntermedios:
+			dist = distancia(coordObj_o_Act,coord)
+			distancias.append([dist,coord]) # No olvidar escribir el punto que da la distancia, no sólo la distancia
+		print("distancias in for: " ,distancias)
 
-    # Rotar la lista para empezar la trayectoria de actB
-    bHorario = puntosIntermedios[indexActB:] + puntosIntermedios[:indexActB]    
-    # Obtener la posición de objA y objB (las intersecciónes la línea que pasa por coordObj con el contorno) en la lista en orden horario que empieza en actB
-    indexObjA = bHorario.index(objA)
-    indexObjB = bHorario.index(objB)
-    # Opción 2: Se sale por lado B de la línea que pasa por coordAct y se llega a lado A de coordObj
-    distancia2 = distanciaTotal(bHorario,indexObjA) + distancia(coordAct,actB) + distancia(coordObj,objA)
-    # Opción 3: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
-    distancia3 = distanciaTotal(bHorario,indexObjB) + distancia(coordAct,actB) + distancia(coordObj,objB)
-  
-    # --Crear listas de punto actual a objetivo en ordenen antihorario:--
-    
-    puntosIntermediosR = puntosIntermedios.copy()
-    puntosIntermediosR.reverse()
-    
-    # Obtener la posición de actA y actB (las intersecciónes la línea que pasa por coordAct con el contorno) en la lista en order antihorario
-    indexActA = puntosIntermediosR.index(actA)
-    indexActB = puntosIntermediosR.index(actB)
-    
-    # Rotar la lista para empezar la trayectoria de actA 
-    aAntiHorario = puntosIntermediosR[indexActA:] + puntosIntermediosR[:indexActA]   
-    # Obtener la posición de objA y objB en la lista en orden ANTIHORARIO que empieza en actA
-    indexObjA = aAntiHorario.index(objA)
-    indexObjB = aAntiHorario.index(objB)    
-    # Opción 4: Se sale por lado A de la línea que pasa por coordAct y se llega a lado A de coordObj
-    distancia4 = distanciaTotal(aAntiHorario,indexObjA) + distancia(coordAct,actA) + distancia(coordObj,objA)
-    # Opción 5: Se sale por lado A de la línea que pasa por coordAct y se llega a lado B de coordObj
-    distancia5 = distanciaTotal(aAntiHorario,indexObjB) + distancia(coordAct,actA) + distancia(coordObj,objB)
-    
-    # Rotar la lista para empezar la trayectoria de actB 
-    bAntiHorario = puntosIntermediosR[indexActB:] + puntosIntermediosR[:indexActB]
-    # Obtener la posición de objA y objB en la lista en orden ANTIHORARIO que empieza en actB
-    indexObjA = bAntiHorario.index(objA)
-    indexObjB = bAntiHorario.index(objB)
-    # Opción 6: Se sale por lado B de la línea que pasa por coordAct y se llega a lado A de coordObj
-    distancia6 = distanciaTotal(bAntiHorario,indexObjA) + distancia(coordAct,actB) + distancia(coordObj,objA)
-    # Opción 7: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
-    distancia7 = distanciaTotal(bAntiHorario,indexObjB) + distancia(coordAct,actB) + distancia(coordObj,objB)
-    
-    # Crear lista de distancias totales da las trayectorias posibles
-    distancias = [distancia0, distancia1, distancia2, distancia3, distancia4, distancia5, distancia6, distancia7]
+		# En la lista de distancias elegir la distancia más pequeña y asignar ella a puntoA que falta
+		minimum = distancias[0][0]
+		puntoA = distancias[0][1]
+		print("minimum o o after for ",minimum)
 
-    for i in range(len(distancias)-1):
-        print("Distancia total a viajar de la opción ", i, ": ", distancias[i], " m")
-     
-    distanciaMin = min(distancias)             # hallar distancia mínima en la lista de distancias totales de cada trayectoria posible
-    indiceMin = distancias.index(distanciaMin) # hallar la posición de esta distancia en a lista
-    
-    # Dependiendo de la trayectoria maś eficiente, se elige el lado del campo que el robot tiene que entrar para llegar a coordObj 
-    if indiceMin == 0 or indiceMin == 1: 
-        if indiceMin == 0:                     # Opción 0: salimos por lado A de coordAct y llegamos a lado A a coordObj en orden HORARIO
-            indiceFin = aHorario.index(objA)
-        elif indiceMin == 1:                   # Opción 1: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden HORARIO
-            indiceFin = aHorario.index(objB)
-        trayectoria = aHorario[:indiceFin+1]
-    elif indiceMin == 2 or indiceMin == 3:     
-        if indiceMin == 2:                     # Opción 2: salimos por lado B de coordAct y llegamos a lado A a coordObj en orden HORARIO
-            indiceFin = bHorario.index(objA)
-        elif indiceMin == 3:                   # Opción 3: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden HORARIO
-            indiceFin = bHorario.index(objB)
-        trayectoria = bHorario[:indiceFin+1]
-    elif indiceMin == 4 or indiceMin == 5:
-        if indiceMin == 4:                     # Opción 4: salimos por lado A de coordAct y llegamos a lado A a coordObj en orden ANTIHORARIO
-            indiceFin = aAntiHorario.index(objA)
-        elif indiceMin == 5:                   # Opción 5: salimos por lado A de coordAct y llegamos a lado B a coordObj en orden ANTIHORARIO
-            indiceFin = aAntiHorario.index(objB)
-        trayectoria = aAntiHorario[:indiceFin+1]
-    elif indiceMin == 6 or indiceMin == 7:
-        if indiceMin == 6:                     # Opción 6: salimos por lado B de coordAct y llegamos a lado A a coordObj en orden ANTIHORARIO
-            indiceFin = bAntiHorario.index(objA)
-        elif indiceMin == 7:                   # Opción 7: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden ANTIHORARIO
-            indiceFin = bAntiHorario.index(objB)
-        trayectoria = bAntiHorario[:indiceFin+1]
-        
-    trayectoria = [coordAct] + trayectoria    # Se añade el punto actual (coordAct) al inicio de nuestra trayecotria para mostrarla bien en la página web
-    trayectoria.append(coordObj)
-    
-    return trayectoria
+		for i in range(len(distancias)-1):
+			if distancias[i][0] < minimum:
+				print("en bucle de contruirTrayectoria, comparando distancias" +str(i))
+				minimum = distancias[i][0]
+				puntoA = distancias[i][1]
+				print("minimum i ",minimum)
+				print("puntoA i ",puntoA)
+		print("minimum final ",minimum)
+		print("puntoA ",puntoA)
+
+
+		return puntoA    
+
+
+	# Iniciar algunas variables utilizadas en el próximo paso
+	counterA = 0
+	counterO = 0
+	actA = 0
+	actB = 0
+	objA = 0
+	objB = 0
+
+	# Asignar un lado A o B a los puntos intermedios (intersecciones que pasan por coordAct y coordObj)
+	for punto in puntosIntermedios:
+		if len(punto) == 3:
+			if punto[2] == "A":
+				if counterA == 0:
+					actA = punto
+					counterA = 1
+				elif counterA == 1:
+					actB = punto
+			if punto[2] == "O":
+				if counterO == 0:
+					objA = punto    
+					counterO = 1
+				elif counterO == 1:
+					objB = punto
+	print("actA before = ", actA)
+	print("actB before = ", actB)
+	 
+	# Si no hay intersecciones que pasan por coordAct o coordObj, llamar una función que encuentra un punto más cercano que se puede utilizar como parte de la trayectoria
+	if actA == 0 and actB == 0:
+		print("going in if actA == 0")
+		actA = sustituirPuntoFaltado(actA,actB,coordAct)  # llamamos la función con los puntos que NO tenemos (actA y/o actB en este caso)
+		actB = actA
+	if objA == 0 and objB == 0:
+		objA = sustituirPuntoFaltado(objA,objB,coordObj) # llamamos la función con los puntos que NO tenemos (objA y/o objB en este caso)
+		objB = objA
+		
+	print("actA final = ", actA)
+	print("actB final = ", actB)
+	print("objA final = ", objA)
+	print("objB final = ", objB)
+
+	# -----Rotar la lista de puntosIntermedios, creando trayectorias posibles, y elegir más eficiente-----   
+
+	# --Crear listas de punto actual a objetivo en ordenen horario:--
+
+	# Obtener la posición de actA y actB (las intersecciónes la línea que pasa por coordAct con el contorno) en la lista en orden horario
+	indexActA = puntosIntermedios.index(actA)
+	indexActB = puntosIntermedios.index(actB)    
+
+	# Rotar la lista para empezar la trayectoria de actA 
+	aHorario = puntosIntermedios[indexActA:] + puntosIntermedios[:indexActA]    
+	# Obtener la posición de objA y objB (las intersecciónes la línea que pasa por coordObj con el contorno) en la lista en orden horario que empieza en actA
+	indexObjA = aHorario.index(objA)
+	indexObjB = aHorario.index(objB)
+	# Opción 0: Se sale por lado A de la línea que pasa por coordAct y se llega a lado A de coordObj
+	distancia0 = distanciaTotal(aHorario,indexObjA) + distancia(coordAct,actA) + distancia(coordObj,objA)
+	# Opción 1: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
+	distancia1 = distanciaTotal(aHorario,indexObjB) + distancia(coordAct,actA) + distancia(coordObj,objB)
+
+	# Rotar la lista para empezar la trayectoria de actB
+	bHorario = puntosIntermedios[indexActB:] + puntosIntermedios[:indexActB]    
+	# Obtener la posición de objA y objB (las intersecciónes la línea que pasa por coordObj con el contorno) en la lista en orden horario que empieza en actB
+	indexObjA = bHorario.index(objA)
+	indexObjB = bHorario.index(objB)
+	# Opción 2: Se sale por lado B de la línea que pasa por coordAct y se llega a lado A de coordObj
+	distancia2 = distanciaTotal(bHorario,indexObjA) + distancia(coordAct,actB) + distancia(coordObj,objA)
+	# Opción 3: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
+	distancia3 = distanciaTotal(bHorario,indexObjB) + distancia(coordAct,actB) + distancia(coordObj,objB)
+
+	# --Crear listas de punto actual a objetivo en ordenen antihorario:--
+
+	puntosIntermediosR = puntosIntermedios.copy()
+	puntosIntermediosR.reverse()
+
+	# Obtener la posición de actA y actB (las intersecciónes la línea que pasa por coordAct con el contorno) en la lista en order antihorario
+	indexActA = puntosIntermediosR.index(actA)
+	indexActB = puntosIntermediosR.index(actB)
+
+	# Rotar la lista para empezar la trayectoria de actA 
+	aAntiHorario = puntosIntermediosR[indexActA:] + puntosIntermediosR[:indexActA]   
+	# Obtener la posición de objA y objB en la lista en orden ANTIHORARIO que empieza en actA
+	indexObjA = aAntiHorario.index(objA)
+	indexObjB = aAntiHorario.index(objB)    
+	# Opción 4: Se sale por lado A de la línea que pasa por coordAct y se llega a lado A de coordObj
+	distancia4 = distanciaTotal(aAntiHorario,indexObjA) + distancia(coordAct,actA) + distancia(coordObj,objA)
+	# Opción 5: Se sale por lado A de la línea que pasa por coordAct y se llega a lado B de coordObj
+	distancia5 = distanciaTotal(aAntiHorario,indexObjB) + distancia(coordAct,actA) + distancia(coordObj,objB)
+
+	# Rotar la lista para empezar la trayectoria de actB 
+	bAntiHorario = puntosIntermediosR[indexActB:] + puntosIntermediosR[:indexActB]
+	# Obtener la posición de objA y objB en la lista en orden ANTIHORARIO que empieza en actB
+	indexObjA = bAntiHorario.index(objA)
+	indexObjB = bAntiHorario.index(objB)
+	# Opción 6: Se sale por lado B de la línea que pasa por coordAct y se llega a lado A de coordObj
+	distancia6 = distanciaTotal(bAntiHorario,indexObjA) + distancia(coordAct,actB) + distancia(coordObj,objA)
+	# Opción 7: Se sale por lado B de la línea que pasa por coordAct y se llega a lado B de coordObj
+	distancia7 = distanciaTotal(bAntiHorario,indexObjB) + distancia(coordAct,actB) + distancia(coordObj,objB)
+
+	# Crear lista de distancias totales da las trayectorias posibles
+	distancias = [distancia0, distancia1, distancia2, distancia3, distancia4, distancia5, distancia6, distancia7]
+
+	for i in range(len(distancias)-1):
+		print("Distancia total a viajar de la opción ", i, ": ", distancias[i], " m")
+	 
+	distanciaMin = min(distancias)             # hallar distancia mínima en la lista de distancias totales de cada trayectoria posible
+	indiceMin = distancias.index(distanciaMin) # hallar la posición de esta distancia en a lista
+
+	# Dependiendo de la trayectoria maś eficiente, se elige el lado del campo que el robot tiene que entrar para llegar a coordObj 
+	if indiceMin == 0 or indiceMin == 1: 
+		if indiceMin == 0:                     # Opción 0: salimos por lado A de coordAct y llegamos a lado A a coordObj en orden HORARIO
+			indiceFin = aHorario.index(objA)
+		elif indiceMin == 1:                   # Opción 1: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden HORARIO
+			indiceFin = aHorario.index(objB)
+		trayectoria = aHorario[:indiceFin+1]
+	elif indiceMin == 2 or indiceMin == 3:     
+		if indiceMin == 2:                     # Opción 2: salimos por lado B de coordAct y llegamos a lado A a coordObj en orden HORARIO
+			indiceFin = bHorario.index(objA)
+		elif indiceMin == 3:                   # Opción 3: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden HORARIO
+			indiceFin = bHorario.index(objB)
+		trayectoria = bHorario[:indiceFin+1]
+	elif indiceMin == 4 or indiceMin == 5:
+		if indiceMin == 4:                     # Opción 4: salimos por lado A de coordAct y llegamos a lado A a coordObj en orden ANTIHORARIO
+			indiceFin = aAntiHorario.index(objA)
+		elif indiceMin == 5:                   # Opción 5: salimos por lado A de coordAct y llegamos a lado B a coordObj en orden ANTIHORARIO
+			indiceFin = aAntiHorario.index(objB)
+		trayectoria = aAntiHorario[:indiceFin+1]
+	elif indiceMin == 6 or indiceMin == 7:
+		if indiceMin == 6:                     # Opción 6: salimos por lado B de coordAct y llegamos a lado A a coordObj en orden ANTIHORARIO
+			indiceFin = bAntiHorario.index(objA)
+		elif indiceMin == 7:                   # Opción 7: salimos por lado B de coordAct y llegamos a lado B a coordObj en orden ANTIHORARIO
+			indiceFin = bAntiHorario.index(objB)
+		trayectoria = bAntiHorario[:indiceFin+1]
+		
+	trayectoria = [coordAct] + trayectoria    # Se añade el punto actual (coordAct) al inicio de nuestra trayecotria para mostrarla bien en la página web
+	trayectoria.append(coordObj)
+
+	return trayectoria
 
 # Devuelve la trayectoria que el robot utilizará para su navegación
 def crearTrayectoria(coordAct, coordObj, geometría):                               # devuelve la trayectoria óptima (menor distancia total) entre coordAct y coordObj
