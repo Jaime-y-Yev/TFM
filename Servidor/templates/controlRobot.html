@@ -12,26 +12,135 @@
         }
         .marker { 
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 20px;
+            height: 20px;
             background: url("https://memegenerator.net/img/images/50x50/15141937.jpg") no-repeat 0 0;
         }
     </style>
 
-    <!-- FALTAN BOTONES Y HAY QUE CAMBIARLE EL ESTILO -->
     <div id="map" class="map"></div>
     <div id="geo-marker" class="marker"></div>
-    <input type='button' name='modoNavegación' value='Modo Navegación' onClick='pubModo(2);'>
-    <input type='button' name='marcha' value='Marcha' onClick='pubMarchaParo(1);'>
-    <input type='button' name='paro' value='Paro' onClick='pubMarchaParo(0);'>
+
+    <div class="container-p-5">
+        <div class="row">
+        
+            <div class="col-md-12">
+                <div id="modoActual" class="update-title">Modo de Operación: detectando modo...</div>
+            </div>
+                
+
+            <div class="col-md-12">
+                <div class="update-nag">
+                    <div class="update-split"><i class="glyphicon glyphicon-refresh"></i></div>
+                    <div id="estadoPiA" class="update-text">detectando estado de PiA...</div>
+                </div>
+            </div>
+        
+            <div class="col-md-12">
+                <div class="update-nag">
+                    <div class="update-split update-info"><i class="glyphicon glyphicon-folder-open"></i></div>
+                    <div id="estadoArduinoA" class="update-text">detectando estado de ArduinoA...</div>
+                </div>
+            </div>
+    
+            <div class="col-md-12">
+                <div class="update-nag">
+                    <div class="update-split update-success"><i class="glyphicon glyphicon-leaf"></i></div>
+                    <div id="estadoPiB" class="update-text">detectando estado de PiB...</div>
+                </div>
+            </div>
+            
+            <div class="col-md-12">
+                <div class="update-nag">
+                    <div class="update-split update-danger"><i class="glyphicon glyphicon-warning-sign"></i></div>
+                    <div id="estadoArduinoB" class="update-text">detectando estado de ArduinoB...</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+       
+    <div class="container-p-6">
+
+        <div class="row">
+
+            <div class="col-md-12">
+                <div class="update-title">Control</div>
+            </div>
+            <div class="col-md-12">
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onClick='pubModo(0);'>Emergencia</button>
+                    <button type='button' class="btn btn-primary" onClick='pubModo(1);'>Inactivo</button>
+                    <button type='button' class="btn btn-primary" onClick='pubModo(2);'>Navegación Autónoma</button>
+                    <!-- <button type='button' class="btn btn-primary" onClick='pubModo(3);'>Sondeo</button> -->
+                    <button type='button' class="btn btn-primary" onClick='pubModo(4);'>Navegación Manual</button>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onClick='pubMarchaParo(0);'>Paro</button>
+                    <button type='button' class="btn btn-primary" onClick='pubMarchaParo(1);'>Marcha</button>
+                    <button type='button' class="btn btn-primary" onClick='pubAntena(0);'>RaspiGNSS</button>
+                    <button type='button' class="btn btn-primary" onClick='pubAntena(1);'>Móvil</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container-p-7">
+            <div class="row2">
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(1);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary"></button>
+                </div>
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(2);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Arrow_northwest.svg/900px-Arrow_northwest.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(1);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(3);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Arrow_northeast.svg/1024px-Arrow_northeast.svg.png' style="width:20px;height:20px;"></button>
+                </div>
+            </div>
+            <div class="row2">
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(3);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(4);' onmouseup='pubMoverCamarma(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+                </div>
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(7);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(0);' onmouseup='pubNavManual(0);'><img src='http://pluspng.com/img-png/circle-png-circle-png-hd-1600.png' style="width:10px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(8);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+                </div>
+            </div>
+            <div class="row2">
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(2);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary"></button>
+                </div>
+                <div class="btn-group">
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(5);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Arrow_southwest.svg/900px-Arrow_southwest.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(4);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(6);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Arrow_southeast.svg/900px-Arrow_southeast.svg.png' style="width:20px;height:20px;"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- <img src='https://i.imgur.com/7NchPOD.jpg' alt="Flowers in Chania"> -->
+        <img src='output.jpg' alt="Flowers in Chania" style="width:128px;height:128px;">
+    
 
 {% endblock %}
+    </div> 
 
 <!-- Establecer el centro del mapa -->
 {% block script1 %}
 <script>
-    var lat = 40.410;   // cambiar a valores dinámicos??
-    var lon = -3.69;
+    // Recibir el JSON de /verParcela
+    var puntoCentro = JSON.parse({{ puntoCentro|tojson }});
+
+    // Parsear el punto medio 
+    var lon =  puntoCentro['xCentro']; 
+    var lat =  puntoCentro['yCentro'];
 </script>
 {% endblock %}
 
@@ -40,7 +149,31 @@
 
     <script>
         
+        var poli = {{ poli|tojson }};
+        console.log("poli = ", poli);
+
+
+        crearParcela(poli);
+        
+        function crearParcela(parcelaCoords){
+            
+            console.log("in crearParcela()");
+
+            // Reescribir la capaGeom con los nuevos puntos
+            capaGeom = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.Polygon([parcelaCoords])
+                    })]
+                }),
+            });
+    
+            // Añadir la nueva capaGeom al mapa
+            map.addLayer(capaGeom);
+        }
+
         // Generación de puntos objetivos sobre el mapa --------------------------------------------------------------------------------------------
+
 
         // Recibir las coordenadas objetivas de /controlRobot
         var coordObjs = {{ coordObjs }};
@@ -55,17 +188,23 @@
                     name: 'puntoObj'
                 })
             );
+
+            //capaCoordObjs.addFeature(coordObjs[i]);
         }
 
+        console.log("puntosObjs = ", puntosObjs)
+        //capaCoordObjs.addFeatures([puntosObjs]);
+
         // Crear una capa con los puntos objetivos
-        var coordObjsLayer = new ol.layer.Vector({
+        capaCoordObjs = new ol.layer.Vector({
             source: new ol.source.Vector({
                 features: puntosObjs
             }),
+            style: stylePObj
         });
 
         // Añadir al mapa la capa de puntos objetivos
-        map.addLayer(coordObjsLayer);
+        map.addLayer(capaCoordObjs);
 
         // Al hacer click sobre un punto objetivo, enviar sus coordenadas a PiA (/controlRobot)
         map.on("click", function(e){
@@ -76,7 +215,9 @@
 
             // Añadir al JSON las coordenadas del punto objetivo seleccionado
             map.forEachFeatureAtPixel(e.pixel, function (feature, layer){
-                sesión.coordObj = feature.getGeometry().getCoordinates();
+                if (layer == capaCoordObjs)
+                    sesión.coordObj = feature.getGeometry().getCoordinates();
+                    console.log("in forEachFeatureAtPixel sesión = ", sesión);
             })
 
             console.log("before Ajax coordObj = ", JSON.stringify(sesión));
@@ -99,16 +240,25 @@
 
         
         // Generación de la trayectoria objetiva sobre el mapa --------------------------------------------------------------------------------------------
+        
+        // Capa de figuras (polígonos, líneas, puntos, etc.) que se dibujan sobre la capa ráster
+        var capaTrayectoriaObj = new ol.layer.Vector({
+            source: source
+        });
+
+        //capaTrayectoriaObj.removeFeatures();
 
         // Recibir de /_cr la trayectoria generada por PiA
         var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
         (function () {
             $.getJSON(
-                $SCRIPT_ROOT + "/_cr", // Ajax route (de dónde viene coordAct)
+                $SCRIPT_ROOT + "/_cr", // Ajax route (de dónde viene trayectoria)
                 function(data){
 
                     // Recoger la trayectoria generada por PiA y enviada como JSON por /_cr
                     var trayectoriaPiA = data.trayectoria;
+
+                    console.log("trayectoriaPiA = ", trayectoriaPiA);
 
                     // Convertir la trayectoria de PiA al formato requerido por la función crearTrayObj (un array de arrays) 
                     var trayectoriaObj = []; 
@@ -119,9 +269,11 @@
                         var latObj = trayectoriaPiA[i][1];
                         trayectoriaObj.push([lonObj,latObj]);
                     }
+                    
+                    console.log("trayectoriaObj = ", trayectoriaObj);
 
                     // Reemplazar la capa de trayectoria objetiva anterior por una nueva
-                    map.removeLayer(capaVector);
+                    map.removeLayer(capaTrayectoriaObj);
                     crearTrayObj(trayectoriaObj);
                 }
             );
@@ -130,24 +282,55 @@
             setTimeout(arguments.callee, 5000);
         })();
 
-        // Crear la trayectoria objetiva sobreescribiendo la capaVector de layout.html y añadiendo los segmentos de línea de la nueva trayectoria objetiva
+        // Crear la trayectoria objetiva sobreescribiendo la capaTrayectoriaObj de layout.html y añadiendo los segmentos de línea de la nueva trayectoria objetiva
         function crearTrayObj(vectorTrayectoria){
             
-            // Reescribir la capaVector con los nuevos puntos
-            capaVector = new ol.layer.Vector({
+            // Reescribir la capaTrayectoriaObj con los nuevos puntos
+            capaTrayectoriaObj = new ol.layer.Vector({
                 source: new ol.source.Vector({
                     features: [new ol.Feature({
                         geometry: new ol.geom.LineString(vectorTrayectoria)
                     })]
                 }),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({color : [0, 255, 0, 1], width : 3})
+                })
             });
 
-            // Añadir la nueva capaVector al mapa
-            map.addLayer(capaVector);
+            // Añadir la nueva capaTrayectoriaObj al mapa
+            map.addLayer(capaTrayectoriaObj);
         }
         
 
         // Botones de control del robot --------------------------------------------------------------------------------------------
+
+        // Recibir de /_md el modo de operación para mostrarlo en la página
+        var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+        (function () {
+            $.getJSON(
+                $SCRIPT_ROOT + "/_md", // Ajax route (de dónde viene coordAct)
+                function(data){
+
+                    // Recoger el modo del sistema y los estados enviados como JSON por /_md
+                    var modo = data.modo;
+                    var estadoPiA = data.estadoPiA;
+                    var estadoArduinoA = data.estadoArduinoA;
+                    var estadoPiB = data.estadoPiB;
+                    var estadoArduinoB = data.estadoArduinoB;
+
+                    document.getElementById("modoActual").innerHTML = "Modo de Operación: " + modo;
+                    document.getElementById("estadoPiA").innerHTML = estadoPiA;
+                    document.getElementById("estadoArduinoA").innerHTML = estadoArduinoA;
+                    document.getElementById("estadoPiB").innerHTML = estadoPiB;
+                    document.getElementById("estadoArduinoB").innerHTML = estadoArduinoB;
+                }
+            );
+
+            // Actualizar el modo cada 1 segundo (típicamente no cambia)
+            setTimeout(arguments.callee, 1000);
+        })();
+
+
 
         // Establecer el modo de operación del robot
         function pubModo(valor)
@@ -199,6 +382,119 @@
             });
         }
 
+//        var timeout;
+//        $('#moverCamaraArriba').mousedown(function(){
+//            timeout = setInterval(function(){
+//                pubMoverCamara(1); 
+//            }, 100);
+//
+//            return false;
+//        });
+//        $('#moverCamaraAbajo').mousedown(function(){
+//            timeout = setInterval(function(){
+//                pubMoverCamara(2); 
+//            }, 100);
+//
+//            return false;
+//        });
+//
+//
+//        $(document).mouseup(function(){
+//            clearInterval(timeout);
+//            return false;
+//        });
+
+        // Configures an element to execute a function periodically whilst it holds the user's attention via a mouse press and hold.
+        //function assertPeriodicPress(id, action, interval) {
+            // Listen for the MouseDown event.
+        //    document.getElementById(id).addEventListener('mousedown', function(ev) { action(); timeout = setInterval(action, interval); return false; }, false);
+            // Listen for mouse up events.
+        //    document.getElementById(id).addEventListener('mouseup', function(ev) { clearInterval(timeout); return false; }, false);
+            // Listen out for touch end events.
+        //    document.getElementById(id).addEventListener('touchend', function(ev) { clearInterval(timeout); return false; }, false);
+        //} // Source: https://stackoverflow.com/questions/3977091/jquery-mousedown-effect-while-left-click-is-held-down
+
+        // Establecer la marcha o paro del robot
+        function pubMoverCamara(valor)
+        {
+            console.log("valor = ", valor);
+
+            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
+            var control = new Object();
+            control.moverCamara = valor;
+
+            console.log("before Ajax control = ", JSON.stringify(control));
+
+            // Enviar a /controlRobot la la señal de marcha o paro
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(control), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed moverCamara");    // mantenerse en la página por si hay más objetivos a realizar           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            }); 
+        }
+        
+        // Establecer la marcha o paro del robot
+        function pubNavManual(valor)
+        {
+            console.log("valor = ", valor);
+
+            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
+            var control = new Object();
+            control.navManual = valor;
+
+            console.log("before Ajax control = ", JSON.stringify(control));
+
+            // Enviar a /controlRobot la la señal de marcha o paro
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(control), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed navManual");    // mantenerse en la página por si hay más objetivos a realizar           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            }); 
+        }
+        
+
+        // Elegir la antena GPS
+        function pubAntena(valor)
+        {
+            console.log("valor = ", valor);
+
+            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
+            var control = new Object();
+            control.antena = valor;
+
+            console.log("before Ajax control = ", JSON.stringify(control));
+
+            // Enviar a /controlRobot la la señal de marcha o paro
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(control), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("ajaxed antena");    // mantenerse en la página por si hay más objetivos a realizar           
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            }); 
+        }
 
         // Generación de la trayectoria actual sobre el mapa --------------------------------------------------------------------------------------------
 
@@ -208,7 +504,10 @@
 
         // Crear la trayectoria actual y la capa que la contendrá
         var trayectoriaAct = []; 
-        var capaVectorAct;
+        var capaTrayectoriaAct;
+
+        var latRobotPrev = 0;
+        var lonRobotPrev = 0;
 
         // Recibir de /_pr las coordenadas actuales provenientes de PiA
         var $SCRIPT_ROOT = {{ request.script_root | tojson | safe }};
@@ -217,14 +516,24 @@
                 $SCRIPT_ROOT + "/_pr", // Ajax route (de dónde viene coordAct)
                 function (data){
 
+                    //console.log("data", data);
+
                     // Extraer y añadir las coordenadas a trayectoriaAct
                     latRobot = data.latr
                     lonRobot = data.lonr
-                    trayectoriaAct.push([lonRobot, latRobot]);
+                    
+                    if (latRobot != latRobotPrev || lonRobot != lonRobotPrev)
+                    {
+                        trayectoriaAct.push([lonRobot, latRobot]); 
+                        console.log("trayectoriaAct", trayectoriaAct);
 
-                    // Reemplazar la capa de trayectoria actual anterior por una nueva
-                    map.removeLayer(capaVectorAct);
-                    crearTrayAct(trayectoriaAct);
+                        // Reemplazar la capa de trayectoria actual anterior por una nueva                        
+                        map.removeLayer(capaTrayectoriaAct);
+                        crearTrayActP(lonRobot, latRobot);
+
+                        lonRobotPrev = lonRobot;
+                        latRobotPrev = latRobot;    
+                    }
                 }
             );
 
@@ -232,11 +541,11 @@
             setTimeout(arguments.callee, 350);
         })();
 
-        // Crear la trayectoria actual sobreescribiendo la capaVectorAct de controlRobot.html y añadiendo los segmentos de línea de la nueva trayectoria actual
+        // Crear la trayectoria actual sobreescribiendo la capaTrayectoriaAct de controlRobot.html y añadiendo los segmentos de línea de la nueva trayectoria actual
         function crearTrayAct(vectorTrayectoria){
 
-            // Reescribir la capaVectorAct con los nuevos puntos
-            capaVectorAct = new ol.layer.Vector({
+            // Reescribir la capaTrayectoriaAct con los nuevos puntos
+            capaTrayectoriaAct = new ol.layer.Vector({
                 source: new ol.source.Vector({
                     features: [new ol.Feature({
                         geometry: new ol.geom.LineString(vectorTrayectoria)
@@ -248,8 +557,45 @@
                 })
             });
 
+            // Añadir la nueva capaTrayectoriaAct al mapa
+            map.addLayer(capaTrayectoriaAct);
+        }
+
+        function crearTrayActP(lonR, latR){
+
+            var styleP = new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 0, 0, 0.3)'
+                }),
+                stroke: new ol.style.Stroke({
+                    width: 2,
+                    color: 'rgba(255, 0, 0, 0.8)'
+                }),
+                image: new ol.style.Circle({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 0, 0, 0.5)'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        width: 1,
+                        color: 'rgba(255, 0, 0, 0.8)'
+                    }),
+                    radius: 2
+                }),
+            });
+
+            // Reescribir la capaTrayectoriaAct con los nuevos puntos
+            capaTrayectoriaAct = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.Point([lonR, latR])
+                    })]
+                }),
+                // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
+                style: styleP
+            });
+
             // Añadir la nueva capaVector al mapa
-            map.addLayer(capaVectorAct);
+            map.addLayer(capaTrayectoriaAct);
         }
 
         // La posición actual del robot se representa con un icono
@@ -263,8 +609,12 @@
         map.addOverlay(iconoPosAct);
 
         // Refrescar la posición actual cada 300 milisegundos
-        setInterval(function(){iconoPosAct.setPosition([lonRobot, latRobot])}, 300);
+        setInterval(function(){
+            if (lonRobot != 0 && latRobot !=0)
+                iconoPosAct.setPosition([lonRobot, latRobot])
+        }, 300);
         
+        console.log("estadoPiA~ ", {{ estadoPiA }});
     </script>
 
 {% endblock %}

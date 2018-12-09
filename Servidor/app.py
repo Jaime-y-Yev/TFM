@@ -8,6 +8,8 @@ app = Flask(__name__)
 
 # Configurar Flask para asegurarse de que los templates se vuelven a cargar automáticamente
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+#app.config["TEMPLATES_AUTO_RELOAD"] = False
+
 
 # Configure la sesión de Flask para utilizar el sistema de archivos en lugar de las cookies
 from flask_session import Session
@@ -52,75 +54,165 @@ def login_required(f):
 
 # Librería y configuración MQTT
 from flask_mqtt import Mqtt
-app.config['MQTT_BROKER_URL'] = 'iot.eclipse.org' 
+#app.config['MQTT_BROKER_URL'] = 'iot.eclipse.org'
+#app.config['MQTT_BROKER_URL'] = 'test.mosquitto.org' 
+#app.config['MQTT_BROKER_URL'] = '192.168.1.128' #piA
+app.config['MQTT_BROKER_URL'] = '192.168.43.25' #Jaime phone
+
+
+
 app.config['MQTT_BROKER_PORT'] = 1883
+#app.config['MQTT_BROKER_URL'] = 'localhost'm
+#memoryviewm
+#m
+#app.config['MQTT_BROKER_PORT'] = 80
 app.config['MQTT_USERNAME'] = ''
 app.config['MQTT_PASSWORD'] = ''
 app.config['MQTT_KEEPALIVE'] = 5
 app.config['MQTT_TLS_ENABLED'] = False
 
-# Clientes MQTT
-mqttSubCoordAct = Mqtt(app)
-mqttSubTrayectoria = Mqtt(app)      
-mqttPubControl = Mqtt(app)
 
-# Variables globales modificadas por los distintos clientes MQTT y recogidas en distintos routes de Flask
-coordAct = [0,0]                        # modificada por mqttSubCoordAct en handle_mqtt_message_coordAct()
-trayectoria = [[0,0], [0,0], [0,0]]     # modificada por mqttSubTrayectoria en handle_mqtt_message_trayectoria()
+# Modos de operación
+EMERGENCIA = 0
+INACTIVO = 1
+NAVEGACIÓN = 2
+SONDEO = 3
+modo = INACTIVO
+estadoPiA = "testEstadoPiA"
+estadoArduinoA = "testEstadoArduinoA"
+estadoPiB = "testEstadoPiB"
+estadoArduinoB = "testEstadoArduinoB" 
+
+
+# Comunicación MQTT 
+clienteMQTT = Mqtt(app)         # se subscribe y publica a los distintos topics para recibir y enviar control y datos al robot
+topics = ['control/RobotServidor/syncModo/',    # espera a peticiones de actualización de modo por parte del robot 
+          'control/RobotServidor/modo/',        # actualiza el modo del robot
+          'control/estadoPiA/',                 # espera a actualizaciones sobre el estado de PiA
+          'control/estadoArduinoA/',            #   "    "        "          "   "    "    "  ArduinoA
+          'control/estadoPiB/',                 #   "    "        "          "   "    "    "  PiB
+          'control/estadoArduinoB/',            #   "    "        "          "   "    "    "  ArduinoB
+          'navegación/coordAct/',               # espera a actualizaciones sobre la posición actual del robot
+          'navegación/trayectoria/',             # espera a la trayectoria generada por PiA
+          'RobotServidor/resultados/fotos/'
+         ]                                
+
+# Variables globales modificadas vía MQTT (y /controlRobot) y recogidas en distintos routes de Flask
+coordAct = [0,0]                        # modificada en el topic: 'navegación/coordAct/'
+trayectoria = [[0,0], [0,0], [0,0]]     # modificada en el topic: 'navegación/trayectoria/'
 idSesion = 0                            # modificada por el POST de /controlRobot
 
-# Funciones del subcriptor MQTT llamado mqttSubCoordAct
-@mqttSubCoordAct.on_connect()
-def handle_connect_coordAct(client, userdata, flags, rc):
-    """Conectarse al topic de la coordenada actual"""
+# Funciones ejecutadas al conectarse al bróker MQTT y al recibir los distintos mensajes
+@clienteMQTT.on_connect()
+def handle_connect(client, userdata, flags, rc):
+    """Subscribirse a todos los topics de MQTT"""
+    for topic in topics:
+        clienteMQTT.subscribe(topic)
+        
+import base64
+from time import sleep
+@clienteMQTT.on_message()
+def handle_mqtt_message(client, userdata, message):
+    """Procesar el mensaje MQTT dependiendo del topic"""
+    
+    topic2 = message.topic
+    if topic2 != 'RobotServidor/resultados/fotos/': 
+        # Parsear el mensaje entre el topic y el payload
+        data = dict(
+            topic=message.topic,
+            payload=message.payload.decode()
+        )
+        topic = data["topic"]
+        payload = json.loads(data["payload"])   
 
-    mqttSubCoordAct.subscribe('/coordAct/#')
-    print("mqttSubCoordAct connectado con código ", rc)
+        global modo   # necesario sólo para el topic 'control/RobotServidor/modo/'
+        
+        print("subbed")
 
-@mqttSubCoordAct.on_message()
-def handle_mqtt_message_coordAct(client, userdata, message):
-    """Recibir la coordenada actual de PiA y guardarla en la variable global"""
+        # Actualizar el modo del robot si se recibe una petición
+        if topic == 'control/RobotServidor/syncModo/':
 
-    # Parsear el mensaje entre el topic y el payload
-    data = dict(
-        topic=message.topic,
-        payload=message.payload.decode()
-    )
-    payload = json.loads(data["payload"])   # transformar el objeto JSON en un dict de Python para acceder a la trayectoria
-
-    # Modificar la variable global coordAct para recogerla en /_rp
-    global coordAct
-    coordAct = payload["coordAct"]
-    print("coordAct: " +str(coordAct))
-
-
-# Funciones del subcriptor MQTT llamado mqttSubTrayectoria
-@mqttSubTrayectoria.on_connect()
-def handle_connect_trayectoria(client, userdata, flags, rc):
-    """Conectarse al topic de la trayectoria"""
-
-    mqttSubTrayectoria.subscribe('/trayectoria/#')
-    print("mqttSubTrayectoria connectado con código ", rc)
-
-@mqttSubTrayectoria.on_message()
-def handle_mqtt_message_trayectoria(client, userdata, message):
-    """Recibir la trayectoria de PiA y guardarla en la variable global"""
-
-    # Parsear el mensaje entre el topic y el payload
-    data = dict(
-        topic=message.topic,
-        payload=message.payload.decode()
-    )
-    payload = json.loads(data["payload"])   # transformar el objeto JSON en un dict de Python para acceder a la trayectoria
-
-    # Modificar la variable global trayectoria para recogerla en /_rc
-    global trayectoria  
-    trayectoria = payload["trayectoria"]
-    print("mqttSubTrayectoria ha recibido la trayectoria: ", trayectoria)
+            if payload == 1: 
+                print("El servidor ha recibido de parte del robot una petición de actualización de modo")
+                sleep(2)
+                modoJSON = json.dumps({"modo": str(modo)})
+                clienteMQTT.publish("control/ServidorRobot/", modoJSON)
+        
+        # Cambiar el modo del sistema al modo recibido del robot
+        elif topic == 'control/RobotServidor/modo/':
+            modo = payload
+            print("El robot ha indicado que su modo es: ", modo, ". Actualizando el modo en el servidor...")
+            modoJSON = json.dumps({"modo": str(modo)})
+            clienteMQTT.publish('control/ServidorRobot/', modoJSON)
 
 
 
+        # Modificar la variable global coordAct para recogerla en /_rp
+        elif topic == 'navegación/coordAct/':
+            global coordAct
+            coordAct = payload
+            print("El servidor ha recibido la posición actual del robot: ", coordAct)
 
+        # Modificar la variable global trayectoria para recogerla en /_rc
+        elif topic == 'navegación/trayectoria/':
+            global trayectoria  
+            trayectoria = payload["trayectoria"]
+            print("El servidor ha recibido la trayectoria generada por el robot: ", trayectoria)
+
+        # Actualizar el estado de PiA para reflejarlo en /controlRobot
+        elif topic == 'control/estadoPiA/':
+            global estadoPiA  
+            estadoPiA = payload
+            print("El servidor ha recibido el estado de PiA: ", estadoPiA)
+
+        # Actualizar el estado de ArduinoA para reflejarlo en /controlRobot
+        elif topic == 'control/estadoArduinoA/':
+            global estadoArduinoA  
+            estadoArduinoA = payload
+            print("El servidor ha recibido el estado de ArduinoA: ", estadoArduinoA)
+        
+        # Actualizar el estado de PiB para reflejarlo en /controlRobot
+        elif topic == 'control/estadoPiB/':
+            global estadoPiB  
+            estadoPiB = payload
+            print("El servidor ha recibido el estado de PiB: ", estadoPiB)
+
+        # Actualizar el estado de ArduinoB para reflejarlo en /controlRobot
+        elif topic == 'control/estadoArduinoB/':
+            global estadoArduinoB 
+            estadoArduinoB = payload
+            print("El servidor ha recibido el estado de ArduinoB: ", estadoArduinoB)
+
+    elif topic2 == 'RobotServidor/resultados/fotos/':
+        print("foto recibida")
+        foto = message.payload.decode('ascii')
+
+        imgdata = base64.b64decode(foto)
+
+        with open('output.jpg', 'wb') as f:
+            f.write(imgdata)
+            print("saved foto")
+            
+# Log de MQTT
+MQTT_LOG_INFO = 0x01
+MQTT_LOG_NOTICE	= 0x02
+MQTT_LOG_WARNING = 0x04
+MQTT_LOG_ERR = 0x08
+MQTT_LOG_DEBUG = 0x10
+@clienteMQTT.on_log()
+def handle_logging(client, userdata, level, buf):
+    if level == MQTT_LOG_INFO:
+        print('MQTT Log Info: {}'.format(buf))
+    elif level == MQTT_LOG_NOTICE:
+        print('MQTT Log Notice: {}'.format(buf))
+    elif level == MQTT_LOG_WARNING:
+        print('MQTT Log Warning: {}'.format(buf))
+    elif level == MQTT_LOG_ERR:
+        print('MQTT Log Error: {}'.format(buf))
+    #elif level == MQTT_LOG_DEBUG:
+    #   print('MQTT LogDebug: {}'.format(buf))
+    
+    
 
 
 ############################################### Aquí empiezan las definiciones de los endpoints/routes de Flask ###############################################
@@ -305,7 +397,34 @@ def verParcela():
 
         # Extraer las coordenadas de la línea de esa parcela
         geomCoords = geometría[0][0]
+        print("geomCoords = ", geomCoords)
+        
         geomCoords = ast.literal_eval(geomCoords)
+        poli = str(geomCoords['poli']) 
+        poli = poli.replace('[','').split('],')
+        [map(int, s.replace(']','').split(',')) for s in poli]
+        
+        print("poli = ", poli)
+        print("type poli = ", type(poli))
+        poli[len(poli)-1] = poli[len(poli)-1].replace(']]','')
+        print("poli = ", poli)
+        print("type poli = ", type(poli))
+
+        poliWeb = []
+        for coord in poli:
+            coord = coord.split(', ')
+            print("coord = ", coord)
+            print("type coord = ", type(coord))
+ 
+            coordLon = float(coord[0])
+            coordLat = float(coord[1])
+            print("coordLon = ", coordLon)
+            print("type coordLon = ", type(coordLon))
+            print("coordLat = ", coordLat)
+            print("type coordLat = ", type(coordLat))
+
+            poliWeb.append([coordLon, coordLat])
+
         línea = str(geomCoords['línea']) 
         línea = línea.replace('[','').split('],')
         [map(int, s.replace(']','').split(',')) for s in línea]
@@ -326,7 +445,7 @@ def verParcela():
         puntoCentro = json.dumps({"xCentro": xCentro, "yCentro": yCentro})  # crear un JSON con estos valores
         
         # Enviar el nombre de la parcela y su punto medio (para centrar el mapa) a verParcela.html
-        return render_template("verParcela.html", nombreParcela=nombreParcela, puntoCentro=puntoCentro)
+        return render_template("verParcela.html", nombreParcela=nombreParcela, puntoCentro=puntoCentro, poli=poliWeb)
 
  
     # Almacenar unas nuevas coordObjs en la base de datos, asociándolas al usuario y parcela correspondientes
@@ -368,13 +487,83 @@ def controlRobot():
         
         # Obtener los datos de la sesión elegida en el menú desplegable de index.html
         sesionElegida = request.args.get('sesión')
+        print("sesionElegida = ", sesionElegida)
         tiempoId_coordObjs = sesionElegida.split(", '")
         idSesión = sesionElegida.split(', ')[1]      
         coordObjs = tiempoId_coordObjs[1]
         coordObjs = coordObjs[:len(coordObjs)-2]
 
+        # Abrir la conexión con la base de datos SQL
+        con = sqlite3.connect('tfm.db')
+        db = con.cursor()
+        
+        # Obtener la geometría de la parcela elegida para centrar el mapa de verParcela.html en esa parcela
+        db.execute("SELECT idUsuarioParcela FROM objetivos WHERE idSesión=?", (idSesión,))
+        idUsuarioParcela = db.fetchall()
+
+        # Extraer las coordenadas de la línea de esa parcela
+        idParcela = idUsuarioParcela[0][0]
+        print("idParcela = ", idParcela)
+        
+        # Obtener la geometría de la parcela elegida para centrar el mapa de verParcela.html en esa parcela
+        db.execute("SELECT geometría FROM parcelas WHERE idParcela=?", (idParcela,))
+        geometría = db.fetchall()
+
+        # Cerrar la conexión con la base de datos
+        con.close()
+
+        # Extraer las coordenadas de la línea de esa parcela
+        geomCoords = geometría[0][0]
+        print("geomCoords = ", geomCoords)
+        
+        geomCoords = ast.literal_eval(geomCoords)
+        poli = str(geomCoords['poli']) 
+        poli = poli.replace('[','').split('],')
+        [map(int, s.replace(']','').split(',')) for s in poli]
+        
+        print("poli = ", poli)
+        print("type poli = ", type(poli))
+        poli[len(poli)-1] = poli[len(poli)-1].replace(']]','')
+        print("poli = ", poli)
+        print("type poli = ", type(poli))
+
+        poliWeb = []
+        for coord in poli:
+            coord = coord.split(', ')
+            print("coord = ", coord)
+            print("type coord = ", type(coord))
+ 
+            coordLon = float(coord[0])
+            coordLat = float(coord[1])
+            print("coordLon = ", coordLon)
+            print("type coordLon = ", type(coordLon))
+            print("coordLat = ", coordLat)
+            print("type coordLat = ", type(coordLat))
+
+            poliWeb.append([coordLon, coordLat])
+
+        línea = str(geomCoords['línea']) 
+        línea = línea.replace('[','').split('],')
+        [map(int, s.replace(']','').split(',')) for s in línea]
+
+        # Calcular el punto medio de la línea para centrar el mapa
+        punto1 = línea[0]
+        punto2 = línea[1]
+        punto2 = punto2[1:len(punto2)-2]
+
+        x1, y1 = punto1.split(',')      # extraer las coordenadas del primer punto de la línea
+        x2, y2 = punto2.split(',')      # extraer las coordenadas del segundo punto de la línea
+
+        x1, y1, x2, y2 = float(x1), float(y1), float(x2), float(y2)     
+
+        xCentro = (x1+x2)/2        # calcular el valor medio de la coordenada x
+        yCentro = (y1+y2)/2        # calcular el valor medio de la coordenada y
+
+        puntoCentro = json.dumps({"xCentro": xCentro, "yCentro": yCentro})  # crear un JSON con estos valores
+        
         # Mostrar coordObjs en controlRobot.html (y no olvidar a qué sesión pertenecen)
-        return render_template("controlRobot.html", coordObjs=coordObjs, idSesión=idSesión)
+        return render_template("controlRobot.html", coordObjs=coordObjs, idSesión=idSesión, puntoCentro=puntoCentro, poli=poliWeb)
+
 
     # Enviar la geometría de la parcela a PiA o la señal de Marcha/Paro desde controlRobot.html
     elif request.method == 'POST':
@@ -385,17 +574,18 @@ def controlRobot():
         # En caso de recibir un cambio de modo, enviarlo a PiA para prepararlo para navegar
         if "modo" in coordObj_o_control_DeAjax:
 
-            # Extraer el modo del Ajax
+            # Extraer del Ajax el modo
             modo = coordObj_o_control_DeAjax["modo"]
-            modo = json.dumps({"modo": modo})
 
             # Enviar el JSON a PiA
-            mqttPubControl.publish('/control/', str(modo))
+            modoJSON = json.dumps({"modo": str(modo)})
+            clienteMQTT.publish("control/ServidorRobot/", modoJSON)
+
 
         # En caso de recibir una coordenada objetivo, enviarla a PiA junto con la geometría de la parcela correspondiente
         elif "coordObj" in coordObj_o_control_DeAjax:
 
-            # Extraer la sesión y la coordenada objetivo del valor recibido del Ajax
+            # Extraer del Ajax la sesión y la coordenada objetivo 
             global idSesion
             idSesion = coordObj_o_control_DeAjax["idSesión"]        # Modificar la variable global idSesión para recogerla en el elif del POST de /controlRobot (justo más abajo)
             coordObj = coordObj_o_control_DeAjax["coordObj"]        # Enviar a PiA
@@ -419,17 +609,17 @@ def controlRobot():
 
             # Enviar un JSON a PiA con la coordenada objetivo y la geometría de la parcela para generar una trayectoria
             coordObj_geometria_idSesion = json.dumps({"coordObj": coordObj, "geometria": geometria, "idSesion": idSesion})
-            mqttPubControl.publish('/coordObj_geometria_idSesion/', str(coordObj_geometria_idSesion))
+            clienteMQTT.publish("navegación/coordObj_geometría/", str(coordObj_geometria_idSesion))
 
         # En caso de recibir una señal de Marcha/Paro, enviarla a PiA para navegar la trayectoria
         elif "marchaOparo" in coordObj_o_control_DeAjax:
 
-            # Extraer la señal de Marcha/Paro del Ajax
+            # Extraer del Ajax la señal de Marcha/Paro 
             marchaOparo = coordObj_o_control_DeAjax["marchaOparo"]
-            marchaOparo = json.dumps({"marchaOparo": marchaOparo})
 
             # Enviar el JSON a PiA
-            mqttPubControl.publish('/control/', str(marchaOparo))
+            marchaParoJSON = json.dumps({"marchaParo": str(marchaOparo)})
+            clienteMQTT.publish("control/ServidorRobot/", str(marchaParoJSON))
 
             # Abrir la conexión con la base de datos SQL
             con = sqlite3.connect('tfm.db')     
@@ -442,24 +632,61 @@ def controlRobot():
             con.commit()
             con.close()
 
+        # En caso de recibir una señal de mover la cámara, enviarla a PiA para mover la cámara manualmente
+        elif "moverCamara" in coordObj_o_control_DeAjax:
+
+            # Extraer del Ajax la dirección de navegación
+            moverCamaraManual = coordObj_o_control_DeAjax["moverCamara"]
+
+            # Enviar el JSON a PiA
+            moverCamaraManualJSON = json.dumps({"moverCamara": str(moverCamaraManual)})
+            clienteMQTT.publish("control/ServidorRobot/", str(moverCamaraManualJSON))
+
+
+        # En caso de recibir una señal de navegación manual, enviarla a PiA para navegar manualmente
+        elif "navManual" in coordObj_o_control_DeAjax:
+
+            # Extraer del Ajax la dirección de navegación
+            direcciónManual = coordObj_o_control_DeAjax["navManual"]
+
+            # Enviar el JSON a PiA
+            direcciónManualJSON = json.dumps({"navManual": str(direcciónManual)})
+            clienteMQTT.publish("control/ServidorRobot/", str(direcciónManualJSON))
+
+        # En caso de recibir una señal de navegación manual, enviarla a PiA para navegar manualmente
+        elif "antena" in coordObj_o_control_DeAjax:
+
+            # Extraer del Ajax la dirección de navegación
+            antena = coordObj_o_control_DeAjax["antena"]
+
+            # Enviar el JSON a PiA
+            antenaJSON = json.dumps({"antena": str(antena)})
+            clienteMQTT.publish("control/ServidorRobot/", str(antenaJSON))
+
+
         # Responder al Ajax de controlRobot.html que se ha recibido la coordenada objetivo o la trayectoria generada por PiA
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 
-@app.route('/_cr') # utilizamos formato json para proporcionar coordAct a la página "controlRobot" utilizando "_rc"
+# Actualizar controlRobot.html con la trayectoria recibida del robot vía MQTT
+@app.route('/_cr') 
 def cr():
-    
     return jsonify(trayectoria=trayectoria)
 
-
-@app.route('/_pr') # utilizamos formato json para proporcionar coordAct a la página "robotP" utilizando "_rp"
+# Actualizar controlRobot.html con la posición actual recibida del robot vía MQTT
+@app.route('/_pr')
 def rp():
     rlat = coordAct[1]
     rlon = coordAct[0]
     return jsonify(latr=rlat, lonr=rlon)
 
+# Actualizar controlRobot.html con el modo y los estados del recibidos del robot vía MQTT
+@app.route('/_md')
+def md():
+    return jsonify(modo=modo, estadoPiA=estadoPiA, estadoArduinoA=estadoArduinoA, estadoPiB=estadoPiB, estadoArduinoB=estadoArduinoB)
 
 
+# TODO: imitar lo que se ha hecho para /history en /resultados 
 #@app.route("/history")
 #@login_required
 #def history():
@@ -468,7 +695,6 @@ def rp():
 #    transactions = db.execute("SELECT * FROM transactions WHERE username = :username ORDER BY time", username=session["username"])
 
 #    return render_template("history.html", table=transactions)
-
 
 
 
@@ -481,34 +707,3 @@ def logout():
 
     # Redirigir a la página de inicio
     return redirect("/")
-
-
-    
-# def errorhandler(e):
-#     """Handle error"""
-#     return apology(e.name, e.code)
-
-
-# # listen for errors
-# for code in default_exceptions:
-#     app.errorhandler(code)(errorhandler)
-
-
-
-# def apology(message, code=400):
-#     """Render message as an apology to user."""
-#     def escape(s):
-#         """
-#         Escape special characters.
-
-#         https://github.com/jacebrowning/memegen#special-characters
-#         """
-#         for old, new in [("-", "--"), (" ", "-"), ("_", "__"), ("?", "~q"),
-#                          ("%", "~p"), ("#", "~h"), ("/", "~s"), ("\"", "''")]:
-#             s = s.replace(old, new)
-#         return s
-#     return render_template("apology.html", top=code, bottom=escape(message)), code
-
-
-if __name__ == '__main__':
-   app.run(host='0.0.0.0', port='8080', debug=True)

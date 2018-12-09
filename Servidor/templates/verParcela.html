@@ -52,6 +52,29 @@
         // Recibir el nombre de la parcela de Flask
         var nombreParcela = {{ nombreParcela|tojson }}; 
         
+        var poli = {{ poli|tojson }};
+        console.log("poli = ", poli);
+
+
+        crearParcela(poli);
+        
+        function crearParcela(parcelaCoords){
+            
+            console.log("in crearParcela()");
+
+            // Reescribir la capaGeom con los nuevos puntos
+            capaGeom = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.Polygon([parcelaCoords])
+                    })]
+                }),
+            });
+    
+            // Añadir la nueva capaGeom al mapa
+            map.addLayer(capaGeom);
+        }
+
         // Dibujar los puntos objetivos
         function addInteraction(){
 
@@ -103,7 +126,7 @@
             var sesión = [fecha, nombreParcela];
 
             // Extraer los puntos de las coordenadas objetivas
-            var coordObjs = capaVector.getSource().getFeatures();
+            var coordObjs = capaCoordObjs.getSource().getFeatures();
             
             // Añadir las coordenadas objetivas a la sesión
             for (var i = 0; i < coordObjs.length; i++)
