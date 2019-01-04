@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt  
 import time
 import json
-import globalesPiA
+import globalesPi
 
 import sys
 sys.path.insert(0, '/home/pi/TFM/Robot')
@@ -26,10 +26,34 @@ def pubMQTT(topic, mensaje,retainMess=False):
     pub.on_connect = on_connect                  # definir que funcion ejecutar al conectar    
     pub.connect(broker_address, broker_port, broker_timeout)         # indicar cómo conectar
     pub.loop_start()                              # empezar el bucle      
-    print("»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»» PiA pub al topic ", topic, " el mensaje ", mensaje)
+    print("»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»» Pi pub al topic ", topic, " el mensaje ", mensaje)
     pub.publish(topic, str(mensaje), retain=retainMess)        # publicar el mensaje a un topic indicado en la llamada de la fucnión     
     pub.disconnect()                              # desconectar    
-    pub.loop_stop()                               # parar el bucle para poder salir de la función y no bloquear el hilo                      
+    pub.loop_stop()                               # parar el bucle para poder salir de la función y no bloquear el hilo     
+    
+
+import base64
+
+def pubMQTTF(topic, mensaje):
+
+	def on_publish(mosq, userdata, mid):
+		mosq.disconnect()
+
+	client = mqtt.Client()                           # definir el cliente
+
+	client.on_publish = on_publish
+
+	client.connect(broker_address, 1883, 60)
+
+	f = open(mensaje, 'rb')
+	fileContent = f.read()
+	byteArr = bytes(fileContent)
+	result = base64.b64encode(byteArr)
+	#client.publish(topic, byteArr, 0)
+	client.publish(topic, result, 0)
+	print("published foto")
+
+	client.loop_forever()                  
 
 #Se utiliza MQTT para recibir comandos de modo, coordObj, y geometría
 def subMQTT(topics):
@@ -43,27 +67,33 @@ def subMQTT(topics):
 		mensaje = message.payload.decode("utf-8") # decodificar mensaje json
 		print("«««««««««««««««««««««««««««««««««««««««««««««««« PiA sub en topic: ",message.topic ," mensaje ", mensaje)
 
-		if message.topic == "ServidorRobot/modo":
+		if message.topic == "ServidorRobot/modoA":
 			print("recibiendo modo")
 
-			#if globalesPiA.modo != MODO_EMERGENCIA and (int(mensaje) != MODO_NAVEGACION and globalesPiA.modo != MODO_SONDEO):
-			if globalesPiA.modo != MODO_EMERGENCIA and not (globalesPiA.modo == MODO_SONDEO and int(mensaje) == MODO_NAVEGACION):
-				globalesPiA.modo = int(mensaje)
+			if globalesPi.modo != MODO_EMERGENCIA and not (globalesPi.modo == MODO_SONDEO and int(mensaje) == MODO_NAVEGACION):
+				globalesPi.modo = int(mensaje)
 
-			if globalesPiA.modo == MODO_NAVEGACION:
-				globalesPiA.permitirSubCoordObj = True 
+			if globalesPi.modo == MODO_NAVEGACION:
+				globalesPi.permitirSubCoordObj = True 
 			
 			
 			sub.disconnect()
 		
+		if message.topic == "ServidorRobot/modoB":
+			
+			if globalesPi.modo != MODO_EMERGENCIA and not (globalesPi.modo == MODO_SONDEO and int(mensaje) == MODO_NAVEGACION):
+				globalesPi.modo = int(mensaje)
+			
+			sub.disconnect()
+		
 		if message.topic == "ServidorRobot/marchaParo":
-			globalesPiA.marchaOparo = int(mensaje)
+			globalesPi.marchaOparo = int(mensaje)
 			sub.disconnect()
 
 		if message.topic == "ServidorRobot/antena":
-			globalesPiA.antena = int(mensaje)
-			globalesPiA.estadoPiA = "Antena " + str(globalesPiA.antena)
-			print("globalesPiA.antena ", globalesPiA.antena)
+			globalesPi.antena = int(mensaje)
+			globalesPi.estadoPiA = "Antena " + str(globalesPi.antena)
+			print("globalesPi.antena ", globalesPi.antena)
 			sub.disconnect()
 
 		
@@ -75,7 +105,7 @@ def subMQTT(topics):
 			lat = float(mensajeJSON["lat"])
 			coordActCan = [float(lon),float(lat)]
 			
-			globalesPiA.coordActCandidato = coordActCan
+			globalesPi.coordActCandidato = coordActCan
 			
 			sub.disconnect()
 
@@ -93,24 +123,37 @@ def subMQTT(topics):
 			geomPoli = geomPoli[:len(geomPoli)-1]
 			geometria = {"linea":geomLinea,"poli":geomPoli}
 
-			# Guardar los variables a globalesPiA 
-			globalesPiA.coordObj = coordObj 
-			globalesPiA.geometria = geometria
-			globalesPiA.idSesion = idSesion
+			# Guardar los variables a globalesPi
+			globalesPi.coordObj = coordObj 
+			globalesPi.geometria = geometria
+			globalesPi.idSesion = idSesion
 			sub.disconnect()
   
 		if message.topic == "ServidorRobot/navManual":
-			globalesPiA.permitirComandoManual= True
-			globalesPiA.comandoManual = mensaje
+			globalesPi.permitirComandoManual= True
+			globalesPi.comandoManual = mensaje
 
 
 		if message.topic == "RobotRobot/sondeoTerminado":
-			globalesPiA.sondeoTerminado = int(mensaje)
+			globalesPi.sondeoTerminado = int(mensaje)
 			print("He recibido sondeTerminado en mqtt")
 			sub.disconnect()
 
 		if message.topic == "RobotServidor/resultados/medidas":
 			resultados = json.loads(mensaje)
+			sub.disconnect()
+				
+			
+		if message.topic == "ServidorRobot/moverCamara":
+			print("in sub moverCamara ")
+			#moverCamara.moverServoWeb(int(control["moverCamara"]))
+			globalesPi.comandoCamara = int(mensaje)
+			sub.disconnect()
+			
+		if message.topic == "RobotRobot/coordObj":
+			coordObj_idSesion = json.loads(mensaje)
+			globalesPi.coordObj = coordObj_idSesion["coordObj"]
+			globalesPi.idSesion = coordObj_idSesion["idSesion"]
 			sub.disconnect()
 	
 
