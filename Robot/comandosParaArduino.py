@@ -124,9 +124,9 @@ def comandoArduino(comando, valor1=None, valor2=None):
 			#print("after respuesta = ", respuesta)
 
 			# Esperar a que se reciban todos los bytes de la respuesta, paralizando la función hasta que queden cero bytes en el búfer de entrada
-			#while True:
-				#if arduino.in_waiting == 0:
-					#break
+			while True:
+				if arduino.in_waiting == 0:
+					break
 
 			#print("after while")
 
