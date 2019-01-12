@@ -21,6 +21,21 @@
     <div id="map" class="map"></div>
     <div id="geo-marker" class="marker"></div>
 
+    <!-- Este formulario envía un GET a /controlRobot con los datos de la sesión elegida -->
+    <form action="/controlRobot" method="get">
+        <div class="form-group">
+            <!-- Menú desplegable que muestra todas las sesiones pendientes de todos los usuarios -->
+            <select name="sesión">
+                <option disabled selected value="">Elegir Sesión</option>
+                {% for sesion in sesionesPendientes %} 
+                    <option value="{{ sesion }}">{{ sesion[0] }}</option>
+                {% endfor %}
+            </select>
+            <!-- Botón que envía el GET a /controlRobot con los datos de la sesión elegida -->
+            <button class="btn btn-primary" type="submit">Elegir Sesión a Ejecutar</button>
+        </div>
+    </form>
+
     <div class="container-p-5">
         <div class="row">
         
@@ -69,19 +84,18 @@
             </div>
             <div class="col-md-12">
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onClick='pubModo(0);'>Emergencia</button>
-                    <button type='button' class="btn btn-primary" onClick='pubModo(1);'>Inactivo</button>
-                    <button type='button' class="btn btn-primary" onClick='pubModo(2);'>Navegación Autónoma</button>
-                    <!-- <button type='button' class="btn btn-primary" onClick='pubModo(3);'>Sondeo</button> -->
-                    <button type='button' class="btn btn-primary" onClick='pubModo(4);'>Navegación Manual</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',0);">Emergencia</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',1);">Inactivo</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',2);">Navegación Autónoma</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',4);">Navegación Manual</button>
                 </div>
             </div>
             <div class="col-md-12">
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onClick='pubMarchaParo(0);'>Paro</button>
-                    <button type='button' class="btn btn-primary" onClick='pubMarchaParo(1);'>Marcha</button>
-                    <button type='button' class="btn btn-primary" onClick='pubAntena(0);'>RaspiGNSS</button>
-                    <button type='button' class="btn btn-primary" onClick='pubAntena(1);'>Móvil</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/marchaParo',0);">Paro</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/marchaParo',1);">Marcha</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/antena',0);">RaspiGNSS</button>
+                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/antena',1);">Móvil</button>
                 </div>
             </div>
         </div>
@@ -90,90 +104,75 @@
             <div class="row2">
                 <div class="btn-group">
                     <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(1);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',1);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
                     <button type='button' class="btn btn-primary"></button>
                 </div>
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(2);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Arrow_northwest.svg/900px-Arrow_northwest.svg.png' style="width:20px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(1);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(3);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Arrow_northeast.svg/1024px-Arrow_northeast.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ai');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Arrow_northwest.svg/900px-Arrow_northwest.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ar');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ad');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Arrow_northeast.svg/1024px-Arrow_northeast.svg.png' style="width:20px;height:20px;"></button>
                 </div>
             </div>
             <div class="row2">
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(3);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',3);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
                     <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(4);' onmouseup='pubMoverCamarma(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',4);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
                 </div>
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(7);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(0);' onmouseup='pubNavManual(0);'><img src='http://pluspng.com/img-png/circle-png-circle-png-hd-1600.png' style="width:10px;height:10px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(8);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','gi');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','pf');" onmouseup="pubMQTT('ServidorRobot/navManual','pf');"><img src='http://pluspng.com/img-png/circle-png-circle-png-hd-1600.png' style="width:10px;height:10px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','gd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
                 </div>
             </div>
             <div class="row2">
                 <div class="btn-group">
                     <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubMoverCamara(2);' onmouseup='pubMoverCamara(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',2);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
                     <button type='button' class="btn btn-primary"></button>
                 </div>
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(5);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Arrow_southwest.svg/900px-Arrow_southwest.svg.png' style="width:20px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(4);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown='pubNavManual(6);' onmouseup='pubNavManual(0);'><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Arrow_southeast.svg/900px-Arrow_southeast.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ri');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Arrow_southwest.svg/900px-Arrow_southwest.svg.png' style="width:20px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','rr');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','rd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Arrow_southeast.svg/900px-Arrow_southeast.svg.png' style="width:20px;height:20px;"></button>
                 </div>
             </div>
         </div>
-
-        <!-- <img src='https://i.imgur.com/7NchPOD.jpg' alt="Flowers in Chania"> -->
-        <img src='output.jpg' alt="Flowers in Chania" style="width:128px;height:128px;">
-    
-
-{% endblock %}
     </div> 
 
-<!-- Establecer el centro del mapa -->
-{% block script1 %}
-<script>
-    // Recibir el JSON de /verParcela
-    var puntoCentro = JSON.parse({{ puntoCentro|tojson }});
+    <!-- <img id="fotoI" src="static/fotoI.jpg" alt="Flowers in Chania">
+    <img id="fotoD" src="static/fotoD.jpg" alt="Flowers in Chania"> -->
 
-    // Parsear el punto medio 
-    var lon =  puntoCentro['xCentro']; 
-    var lat =  puntoCentro['yCentro'];
-</script>
 {% endblock %}
 
-<!-- FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF -->
-{% block script2 %}
+
+<!-- Permite ejecutar todas las funciones de /controlRobot -->
+{% block scriptPersonalizado %}
 
     <script>
+
+        
+        /***************************************************************  Parcela  ***************************************************************/
         
         var poli = {{ poli|tojson }};
-        console.log("poli = ", poli);
+        console.log("Recibidas las coordenadas de la parcela = ", poli);
+          
+        // Reescribir la capaGeom con los nuevos puntos
+        capaGeom = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [new ol.Feature({
+                    geometry: new ol.geom.Polygon([poli])
+                })]
+            }),
+        });
+
+        // Añadir la nueva capaGeom al mapa
+        console.log("Dibujando la parcela");
+        map.addLayer(capaGeom);
 
 
-        crearParcela(poli);
-        
-        function crearParcela(parcelaCoords){
-            
-            console.log("in crearParcela()");
 
-            // Reescribir la capaGeom con los nuevos puntos
-            capaGeom = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.Polygon([parcelaCoords])
-                    })]
-                }),
-            });
-    
-            // Añadir la nueva capaGeom al mapa
-            map.addLayer(capaGeom);
-        }
-
-        // Generación de puntos objetivos sobre el mapa --------------------------------------------------------------------------------------------
-
+        /***************************************************************  Puntos objetivos  ***************************************************************/
 
         // Recibir las coordenadas objetivas de /controlRobot
         var coordObjs = {{ coordObjs }};
@@ -188,12 +187,7 @@
                     name: 'puntoObj'
                 })
             );
-
-            //capaCoordObjs.addFeature(coordObjs[i]);
         }
-
-        console.log("puntosObjs = ", puntosObjs)
-        //capaCoordObjs.addFeatures([puntosObjs]);
 
         // Crear una capa con los puntos objetivos
         capaCoordObjs = new ol.layer.Vector({
@@ -204,7 +198,29 @@
         });
 
         // Añadir al mapa la capa de puntos objetivos
+        console.log("Dibujando puntos objetivos = ", puntosObjs)
         map.addLayer(capaCoordObjs);
+
+
+
+        function ajaxControlRobot(mensajeJSON)
+        {
+            // Enviar el JSON a /controlRobot 
+            $.ajax({
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(mensajeJSON), 
+                dataType: 'json',
+                url: '/controlRobot',
+                success: function () {
+                    console.log("Ajax enviado con éxito");               
+                },
+                error: function() {
+                    alert("Error en Ajax de controlRobot.html");
+                }
+            });
+        }
+            
 
         // Al hacer click sobre un punto objetivo, enviar sus coordenadas a PiA (/controlRobot)
         map.on("click", function(e){
@@ -217,48 +233,43 @@
             map.forEachFeatureAtPixel(e.pixel, function (feature, layer){
                 if (layer == capaCoordObjs)
                     sesión.coordObj = feature.getGeometry().getCoordinates();
-                    console.log("in forEachFeatureAtPixel sesión = ", sesión);
             })
 
-            console.log("before Ajax coordObj = ", JSON.stringify(sesión));
-
-            // Enviar a /controlRobot los datos de la sesión a ejecutar
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(sesión), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed coordObj");    // mantenerse en la página por si hay más objetivos a realizar           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            });
+            ajaxControlRobot(sesión);
         });
 
         
-        // Generación de la trayectoria objetiva sobre el mapa --------------------------------------------------------------------------------------------
+        /***************************************************************  Trayectoria objetivo  ***************************************************************/
         
         // Capa de figuras (polígonos, líneas, puntos, etc.) que se dibujan sobre la capa ráster
         var capaTrayectoriaObj = new ol.layer.Vector({
             source: source
         });
 
-        //capaTrayectoriaObj.removeFeatures();
 
-        // Recibir de /_cr la trayectoria generada por PiA
+
+        // Recibir periódicamente los datos de Flask para actualizarlos en la página
         var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
         (function () {
             $.getJSON(
-                $SCRIPT_ROOT + "/_cr", // Ajax route (de dónde viene trayectoria)
+                $SCRIPT_ROOT + "/_actualizarControlRobot", // Ajax route (de dónde viene coordAct)
                 function(data){
+
+                    // Recoger el modo del sistema y los estados enviados como JSON por /_md
+                    var modo = data.modo;
+                    var estadoPiA = data.estadoPiA;
+                    var estadoArduinoA = data.estadoArduinoA;
+                    var estadoPiB = data.estadoPiB;
+                    var estadoArduinoB = data.estadoArduinoB;
+
+                    document.getElementById("modoActual").innerHTML = "Modo de Operación: " + modo;
+                    document.getElementById("estadoPiA").innerHTML = estadoPiA;
+                    document.getElementById("estadoArduinoA").innerHTML = estadoArduinoA;
+                    document.getElementById("estadoPiB").innerHTML = estadoPiB;
+                    document.getElementById("estadoArduinoB").innerHTML = estadoArduinoB;
 
                     // Recoger la trayectoria generada por PiA y enviada como JSON por /_cr
                     var trayectoriaPiA = data.trayectoria;
-
-                    console.log("trayectoriaPiA = ", trayectoriaPiA);
 
                     // Convertir la trayectoria de PiA al formato requerido por la función crearTrayObj (un array de arrays) 
                     var trayectoriaObj = []; 
@@ -270,18 +281,36 @@
                         trayectoriaObj.push([lonObj,latObj]);
                     }
                     
-                    console.log("trayectoriaObj = ", trayectoriaObj);
+                    console.log("PiA ha calculado la trayectoriaObj = ", trayectoriaObj);
 
                     // Reemplazar la capa de trayectoria objetiva anterior por una nueva
                     map.removeLayer(capaTrayectoriaObj);
                     crearTrayObj(trayectoriaObj);
+
+                    // Extraer y añadir las coordenadas a trayectoriaAct
+                    latRobot = data.latr
+                    lonRobot = data.lonr
+                    
+                    if (latRobot != latRobotPrev || lonRobot != lonRobotPrev)
+                    {
+                        trayectoriaAct.push([lonRobot, latRobot]); 
+                        console.log("Almacenando la trayectoriaAct = ", trayectoriaAct);
+
+                        // Reemplazar la capa de trayectoria actual anterior por una nueva                        
+                        map.removeLayer(capaTrayectoriaAct);
+                        crearTrayAct(lonRobot, latRobot);
+
+                        lonRobotPrev = lonRobot;
+                        latRobotPrev = latRobot;    
+                    }
                 }
             );
 
-            // Actualizar la trayectoria objetiva cada 5 segundos (típicamente no cambia)
-            setTimeout(arguments.callee, 5000);
+            // Actualizar el modo cada 1 segundo (típicamente no cambia)
+            setTimeout(arguments.callee, 500);
         })();
 
+        
         // Crear la trayectoria objetiva sobreescribiendo la capaTrayectoriaObj de layout.html y añadiendo los segmentos de línea de la nueva trayectoria objetiva
         function crearTrayObj(vectorTrayectoria){
             
@@ -302,268 +331,41 @@
         }
         
 
-        // Botones de control del robot --------------------------------------------------------------------------------------------
-
-        // Recibir de /_md el modo de operación para mostrarlo en la página
-        var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-        (function () {
-            $.getJSON(
-                $SCRIPT_ROOT + "/_md", // Ajax route (de dónde viene coordAct)
-                function(data){
-
-                    // Recoger el modo del sistema y los estados enviados como JSON por /_md
-                    var modo = data.modo;
-                    var estadoPiA = data.estadoPiA;
-                    var estadoArduinoA = data.estadoArduinoA;
-                    var estadoPiB = data.estadoPiB;
-                    var estadoArduinoB = data.estadoArduinoB;
-
-                    document.getElementById("modoActual").innerHTML = "Modo de Operación: " + modo;
-                    document.getElementById("estadoPiA").innerHTML = estadoPiA;
-                    document.getElementById("estadoArduinoA").innerHTML = estadoArduinoA;
-                    document.getElementById("estadoPiB").innerHTML = estadoPiB;
-                    document.getElementById("estadoArduinoB").innerHTML = estadoArduinoB;
-                }
-            );
-
-            // Actualizar el modo cada 1 segundo (típicamente no cambia)
-            setTimeout(arguments.callee, 1000);
-        })();
-
-
+        /***************************************************************  Informar de modo y estados  ***************************************************************/
 
         // Establecer el modo de operación del robot
-        function pubModo(valor)
+        function pubMQTT(topic, mensaje)
         {
             // Crear un objeto JSON para la señal de control y asignarle el modo elegido
             var control = new Object();
-            control.modo = valor;
+            control.topic = topic;
+            control.mensaje = mensaje;
 
-            console.log("before Ajax control = ", JSON.stringify(control));
+            console.log("Enviando a Flask para publicar = ", JSON.stringify(control));
 
-            // Enviar a /controlRobot el modo elegido
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(control), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed modo");    // mantenerse en la página para seleccionar el punto objetivo           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            });
-        }
-
-        // Establecer la marcha o paro del robot
-        function pubMarchaParo(valor)
-        {
-            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
-            var control = new Object();
-            control.marchaOparo = valor;
-
-            console.log("before Ajax control = ", JSON.stringify(control));
-
-            // Enviar a /controlRobot la la señal de marcha o paro
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(control), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed marcha o paro");    // mantenerse en la página por si hay más objetivos a realizar           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            });
-        }
-
-//        var timeout;
-//        $('#moverCamaraArriba').mousedown(function(){
-//            timeout = setInterval(function(){
-//                pubMoverCamara(1); 
-//            }, 100);
-//
-//            return false;
-//        });
-//        $('#moverCamaraAbajo').mousedown(function(){
-//            timeout = setInterval(function(){
-//                pubMoverCamara(2); 
-//            }, 100);
-//
-//            return false;
-//        });
-//
-//
-//        $(document).mouseup(function(){
-//            clearInterval(timeout);
-//            return false;
-//        });
-
-        // Configures an element to execute a function periodically whilst it holds the user's attention via a mouse press and hold.
-        //function assertPeriodicPress(id, action, interval) {
-            // Listen for the MouseDown event.
-        //    document.getElementById(id).addEventListener('mousedown', function(ev) { action(); timeout = setInterval(action, interval); return false; }, false);
-            // Listen for mouse up events.
-        //    document.getElementById(id).addEventListener('mouseup', function(ev) { clearInterval(timeout); return false; }, false);
-            // Listen out for touch end events.
-        //    document.getElementById(id).addEventListener('touchend', function(ev) { clearInterval(timeout); return false; }, false);
-        //} // Source: https://stackoverflow.com/questions/3977091/jquery-mousedown-effect-while-left-click-is-held-down
-
-        // Establecer la marcha o paro del robot
-        function pubMoverCamara(valor)
-        {
-            console.log("valor = ", valor);
-
-            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
-            var control = new Object();
-            control.moverCamara = valor;
-
-            console.log("before Ajax control = ", JSON.stringify(control));
-
-            // Enviar a /controlRobot la la señal de marcha o paro
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(control), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed moverCamara");    // mantenerse en la página por si hay más objetivos a realizar           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            }); 
-        }
-        
-        // Establecer la marcha o paro del robot
-        function pubNavManual(valor)
-        {
-            console.log("valor = ", valor);
-
-            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
-            var control = new Object();
-            control.navManual = valor;
-
-            console.log("before Ajax control = ", JSON.stringify(control));
-
-            // Enviar a /controlRobot la la señal de marcha o paro
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(control), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed navManual");    // mantenerse en la página por si hay más objetivos a realizar           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            }); 
+            ajaxControlRobot(control);
         }
         
 
-        // Elegir la antena GPS
-        function pubAntena(valor)
-        {
-            console.log("valor = ", valor);
 
-            // Crear un objeto JSON para la señal de control y asignarle la marcha o paro
-            var control = new Object();
-            control.antena = valor;
-
-            console.log("before Ajax control = ", JSON.stringify(control));
-
-            // Enviar a /controlRobot la la señal de marcha o paro
-            $.ajax({
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(control), 
-                dataType: 'json',
-                url: '/controlRobot',
-                success: function () {
-                    console.log("ajaxed antena");    // mantenerse en la página por si hay más objetivos a realizar           
-                },
-                error: function() {
-                    alert("Error en Ajax de controlRobot.html");
-                }
-            }); 
-        }
+        /***************************************************************  Trayectoria actual  ***************************************************************/
 
         // Generación de la trayectoria actual sobre el mapa --------------------------------------------------------------------------------------------
 
         // Valores iniciales de la posición del robot
         var latRobot = 40;      
         var lonRobot = -3;
+        var latRobotPrev = 0;
+        var lonRobotPrev = 0;
 
         // Crear la trayectoria actual y la capa que la contendrá
         var trayectoriaAct = []; 
         var capaTrayectoriaAct;
 
-        var latRobotPrev = 0;
-        var lonRobotPrev = 0;
 
-        // Recibir de /_pr las coordenadas actuales provenientes de PiA
-        var $SCRIPT_ROOT = {{ request.script_root | tojson | safe }};
-        (function () {
-            $.getJSON(
-                $SCRIPT_ROOT + "/_pr", // Ajax route (de dónde viene coordAct)
-                function (data){
+        function crearTrayAct(lonR, latR){
 
-                    //console.log("data", data);
-
-                    // Extraer y añadir las coordenadas a trayectoriaAct
-                    latRobot = data.latr
-                    lonRobot = data.lonr
-                    
-                    if (latRobot != latRobotPrev || lonRobot != lonRobotPrev)
-                    {
-                        trayectoriaAct.push([lonRobot, latRobot]); 
-                        console.log("trayectoriaAct", trayectoriaAct);
-
-                        // Reemplazar la capa de trayectoria actual anterior por una nueva                        
-                        map.removeLayer(capaTrayectoriaAct);
-                        crearTrayActP(lonRobot, latRobot);
-
-                        lonRobotPrev = lonRobot;
-                        latRobotPrev = latRobot;    
-                    }
-                }
-            );
-
-            // Actualizar la trayectoria actual cada 350 milisegundos
-            setTimeout(arguments.callee, 350);
-        })();
-
-        // Crear la trayectoria actual sobreescribiendo la capaTrayectoriaAct de controlRobot.html y añadiendo los segmentos de línea de la nueva trayectoria actual
-        function crearTrayAct(vectorTrayectoria){
-
-            // Reescribir la capaTrayectoriaAct con los nuevos puntos
-            capaTrayectoriaAct = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.LineString(vectorTrayectoria)
-                    })]
-                }),
-                // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({color : [255, 0, 0, 1], width : 3})
-                })
-            });
-
-            // Añadir la nueva capaTrayectoriaAct al mapa
-            map.addLayer(capaTrayectoriaAct);
-        }
-
-        function crearTrayActP(lonR, latR){
-
-            var styleP = new ol.style.Style({
+            var stylePAct = new ol.style.Style({
                 fill: new ol.style.Fill({
                     color: 'rgba(255, 0, 0, 0.3)'
                 }),
@@ -591,12 +393,14 @@
                     })]
                 }),
                 // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
-                style: styleP
+                style: stylePAct
             });
 
             // Añadir la nueva capaVector al mapa
             map.addLayer(capaTrayectoriaAct);
         }
+
+        /***************************************************************  Posición actual  ***************************************************************/
 
         // La posición actual del robot se representa con un icono
         iconoPosAct = new ol.Overlay({
@@ -613,8 +417,12 @@
             if (lonRobot != 0 && latRobot !=0)
                 iconoPosAct.setPosition([lonRobot, latRobot])
         }, 300);
-        
-        console.log("estadoPiA~ ", {{ estadoPiA }});
+
+
+        //setInterval(function(){
+        //    document.getElementById("fotoI").src = "static/fotoI.jpg";
+        //    document.getElementById("fotoD").src = "static/fotoD.jpg";
+        //}, 10000);
     </script>
 
 {% endblock %}

@@ -16,7 +16,6 @@
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
 
-
         <!-- Bootstrap 4 CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
 
@@ -29,17 +28,10 @@
         <!-- Bootstrap 4 JS -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
 
-        <!-- Bootstrap 4 -->
-        <!-- <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" rel="stylesheet"/>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script> -->
-
         <!-- CSS general-->
         <link href="/static/css/styles.css" rel="stylesheet"/>
 
         <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script> -->
-
-        <!-- JQuery 3 -->
-        <!-- <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script> -->
 
         <!-- OpenLayers 4: necesario para los mapas -->
         <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
@@ -67,7 +59,7 @@
                     <ul class="navbar-nav mr-auto mt-2">
                         <li class="nav-item"><a class="nav-link" href="/crearParcela">Crear Parcela</a></li>   
                         <li class="nav-item"><a class="nav-link" href="/verParcela">Ver Parcela</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/controlRobot">Control Robot</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/controlRobot">Controlar Robot</a></li>
                     </ul>
                     <ul class="navbar-nav ml-auto mt-2">
                         <li class="nav-item"><a class="nav-link" href="/contacto">Contacto</a></li>
@@ -82,7 +74,7 @@
             </div>
         </nav>
 
-<!--         {% if get_flashed_messages() %}
+        <!-- {% if get_flashed_messages() %}
             <header>
                 <div class="alert alert-primary border text-center" role="alert">
                     {{ get_flashed_messages() | join(" ") }}
@@ -95,9 +87,6 @@
             {% block body %}{% endblock %}
         </main>
         
-        <!-- Script con los valores de lon y lat que centran el mapa que viene a continuación -->
-        {% block script1 %}{% endblock %}
-
         <!-- En caso de encontrarse en una página de mapa, mostrar dicho mapa -->
         {% if request.path == "/verParcela" or request.path == "/crearParcela" or request.path == "/controlRobot" %}
             
@@ -147,12 +136,19 @@
                     style: stylePObj
                 });
 
+                // Recibir el JSON del punto centro de la ruta de Flask (/crearParcela, /verParcela, o /controlRobot)
+                var puntoCentro = JSON.parse({{ puntoCentro|tojson }});
+
+                // Parsear el punto medio 
+                var lon =  puntoCentro['xCentro']; 
+                var lat =  puntoCentro['yCentro'];
+
                 // Mapa con capas ráster y de vectores y una vista personalizada
                 var map = new ol.Map({
                     layers: [capaRaster, capaGeom],   // incluir en este mapa la capa de imágenes satélite y de geometrías
                     target: 'map',
                     view: new ol.View({                 // vista personalizada
-                        projection: "EPSG:4326",            // en lugar de EPSG:3857 por defecto (ambas en WGS-84)
+                        projection: "EPSG:4326",        // en lugar de EPSG:3857 por defecto (ambas en WGS-84)
                         center: [lon, lat],         
                         zoom: 19,
                         maxZoom: 19
@@ -164,12 +160,14 @@
         {% endif %}
         
         <!-- Script personalizado de cada página -->
-        {% block script2 %}{% endblock %}
+        {% block scriptPersonalizado %}{% endblock %}
 
         <!-- Pie de página -->
         <footer class="small text-center text-muted">
             <div>Yevheniya Kupchyk</div>
             <div>Jaime Salazar Lahera</div>
+            <div>Máster de Electromecánica</div>
+            <div>ETSIDI, Universidad Politécnica de Madrid</div>
         </footer>
 
     </body>

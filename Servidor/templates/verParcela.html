@@ -4,8 +4,10 @@
 
 <!-- Librería de datepick para crear un widget de calendario -->
 {% block head %}
+
     <link rel="stylesheet" href="static/css/datepickk.min.css">
     <script src="static/js/datepickk.min.js"></script>
+
 {% endblock %}
 
 {% block title %}Ver Parcela{% endblock %}
@@ -13,12 +15,25 @@
 <!-- Recoge la fecha de ejecución y envía las coordenadas objetivo a /verParcela -->
 {% block body %} 
 
+    <form action="/verParcela" method="get">
+        <div class="form-group">
+            <!-- Menú desplegable que muestra todas las parcelas del usuario actual -->
+            <select name="nombreParcela">
+                    <option disabled selected value="">Elegir Parcela</option>
+                {% for nombre in nombresParcelas %}
+                    <option value="{{ nombre[0] }}">{{ nombre[0] }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary" type="submit">Ver Parcela</button>
+        </div>
+    </form>    
+
     <!-- Importa el mapa de layout.html -->
     <div id="map" class="map"></div>
 
     <!-- Campo que indica la fecha elegida -->
     <div>
-        <label id="dateLabelID">Por favor elige una fecha</label> 
+        <label id="dateLabelID">Elige una fecha</label> 
     </div>
     
     <!-- Lanza el calendario para elegir la fecha -->
@@ -26,131 +41,374 @@
 
     <!-- Botón que envía la sesión y su fecha de ejecución a /verParcela, donde se subirán a la base de datos -->
     <button id="submitID" class="btn btn-primary" type="submit">Enviar Petición</button>
- {% endblock %}   
- 
-<!-- Establecer el centro del mapa según el punto medio de la línea enviado desde Flask-->
- {% block script1 %}
- <script> 
-
-    // Recibir el JSON de /verParcela
-    var puntoCentro = JSON.parse({{ puntoCentro|tojson }});
-
-    // Parsear el punto medio 
-    var lon =  puntoCentro['xCentro']; 
-    var lat =  puntoCentro['yCentro'];
-
-</script>
-{% endblock %}   
-
-<!-- Permite dibujar los puntos objetivos y el tiempo de ejecución de la sesión y enviarla a /verParcela -->
-{% block script2 %}
-<script>
-
-    // Cuando esté listo el documento, empezar el script
-    $(document).ready(function(){
-
-        // Recibir el nombre de la parcela de Flask
-        var nombreParcela = {{ nombreParcela|tojson }}; 
-        
-        var poli = {{ poli|tojson }};
-        console.log("poli = ", poli);
-
-
-        crearParcela(poli);
-        
-        function crearParcela(parcelaCoords){
-            
-            console.log("in crearParcela()");
-
-            // Reescribir la capaGeom con los nuevos puntos
-            capaGeom = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.Polygon([parcelaCoords])
-                    })]
-                }),
-            });
     
-            // Añadir la nueva capaGeom al mapa
-            map.addLayer(capaGeom);
-        }
+    <div  class="container p-5">
 
-        // Dibujar los puntos objetivos
-        function addInteraction(){
+        <form action="/verParcela" method="get">
+            <div class="form-group">
+                <!-- Menú desplegable que muestra todas las fechas de resultados de la parcela elegida anteriormente -->
+                <select name="menuFechas">
+                    <option disabled selected value="">Elegir Sesión</option>
+                    {% for fecha in fechas %}
+                        <option name="fechaElegida" value="{{ fecha }}">{{ fecha }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary" type="submit">Ver Resultados</button>
+            </div>
+        </form>    
+        <!-- Tabla que muestra todos los resultados para una parcela, filtrados según la fecha elegida anteriormente -->
+        <table id="tablaResultados" class="table table-sm">  
+            <thead>
+                <tr>
+                    <th>coordObj</th>
+                    <th><input type="checkbox" id="checkTemp" onclick="mostrarResultado(1, 'checkTemp')">Temperatura</th>
+                    <th><input type="checkbox" id="checkHum" onclick="mostrarResultado(2, 'checkHum')">Humedad</th>
+                    <th><input type="checkbox" id="checkEC" onclick="mostrarResultado(3, 'checkEC')">EC</th>
+                    <th><input type="checkbox" id="checkSal" onclick="mostrarResultado(4, 'checkSal')">Salinidad</th>
+                    <th><input type="checkbox" id="checkSDT" onclick="mostrarResultado(5, 'checkSDT')">SDT</th>
+                    <th><input type="checkbox" id="checkEps" onclick="mostrarResultado(6, 'checkEps')">Epsilon</th>
+                    <th>Tiempo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resultado in resultados %}
+                <tr>
+                    {% for columna in resultado %}
+                        <td> {{ columna }} </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody >
+        </table>
+    </div>
+    <button class="btn btn-primary" onclick="mandarResultados()">Mandar Resultados</button>
 
-            // Punto (coordenada objetivo) que se almacena en la fuente 'source' creada en layout.html
-            var draw = new ol.interaction.Draw({
-                source: source,
-                type: 'Point'
+{% endblock %}   
+ 
+<!-- Permite dibujar los puntos objetivos y el tiempo de ejecución de la sesión y enviarla a /verParcela -->
+{% block scriptPersonalizado %}
+
+    <script>
+
+        // Cuando esté listo el documento, empezar el script
+        $(document).ready(function(){
+
+            // Recibir el nombre de la parcela de Flask
+            var nombreParcela = {{ nombreParcela|tojson }}; 
+            
+            var poli = {{ poli|tojson }};
+
+            crearParcela(poli);
+            
+            function crearParcela(parcelaCoords){
+                
+                // Reescribir la capaGeom con los nuevos puntos
+                capaGeom = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Polygon([parcelaCoords])
+                        })]
+                    }),
+                });
+        
+                // Añadir la nueva capaGeom al mapa
+                map.addLayer(capaGeom);
+            }
+
+            // Dibujar los puntos objetivos
+            function addInteraction(){
+
+                // Punto (coordenada objetivo) que se almacena en la fuente 'source' creada en layout.html
+                var draw = new ol.interaction.Draw({
+                    source: source,
+                    type: 'Point'
+                });
+            
+                // Dibujar los puntos
+                map.addInteraction(draw);
+            }
+            addInteraction();
+            
+            // Calendario para elegir la fecha de ejecución
+            var calendario = new Datepickk();   // nuevo objeto de calendario 
+            calendario.maxSelections = 1;       // elegir como máximo una sola fecha
+            calendario.closeOnClick = true;     // cerrar el calendario al hacer click fuera de él
+            
+            // Al cerrar el calendario, apuntar la fecha elegida
+            var fecha;  // global para recogerla en el AJAX
+            calendario.onClose = function(){
+
+                // Guardar la fecha seleccionada en el calendario en nuestra variable
+                fecha = new Date(calendario.selectedDates);
+
+                // Indicar al usuario la fecha elegida
+                document.getElementById("dateLabelID").innerHTML = "Has elegido: " + fecha;
+
+                // Convertir la fecha en el formato datetime estándar de la base de datos
+                fecha =
+                    fecha.getUTCFullYear() + "-" +
+                    ("0" + (fecha.getUTCMonth()+1)).slice(-2) + "-" +
+                    ("0" + fecha.getUTCDate()).slice(-2) + " " +
+                    ("0" + fecha.getUTCHours()).slice(-2) + ":" +
+                    ("0" + fecha.getUTCMinutes()).slice(-2) + ":" +
+                    ("0" + fecha.getUTCSeconds()).slice(-2);
+            };
+
+            // Mostrar el calendario al hacer click en el botón de elegir fecha
+            $('#peticiónID').click(function() {
+                calendario.show();
             });
-        
-            // Dibujar los puntos
-            map.addInteraction(draw);
-        }
-        addInteraction();
-        
-        // Calendario para elegir la fecha de ejecución
-        var calendario = new Datepickk();   // nuevo objeto de calendario 
-        calendario.maxSelections = 1;       // elegir como máximo una sola fecha
-        calendario.closeOnClick = true;     // cerrar el calendario al hacer click fuera de él
-        
-        // Al cerrar el calendario, apuntar la fecha elegida
-        var fecha;  // global para recogerla en el AJAX
-        calendario.onClose = function(){
 
-            // Guardar la fecha seleccionada en el calendario en nuestra variable
-            fecha = new Date(calendario.selectedDates);
+            // Al hacer click sobre el botón, enviar las coordenadas y la fecha a /verParcela
+            $('#submitID').click(function() {
 
-            // Indicar al usuario la fecha elegida
-            document.getElementById("dateLabelID").innerHTML = "Has elegido: " + fecha;
+                // Guardar la fecha de la sesión y el nombre de la parcela donde tendrá lugar
+                var sesión = [fecha, nombreParcela];
 
-            // Convertir la fecha en el formato datetime estándar de la base de datos
-            fecha =
-                fecha.getUTCFullYear() + "-" +
-                ("0" + (fecha.getUTCMonth()+1)).slice(-2) + "-" +
-                ("0" + fecha.getUTCDate()).slice(-2) + " " +
-                ("0" + fecha.getUTCHours()).slice(-2) + ":" +
-                ("0" + fecha.getUTCMinutes()).slice(-2) + ":" +
-                ("0" + fecha.getUTCSeconds()).slice(-2);
-        };
+                // Extraer los puntos de las coordenadas objetivas
+                var coordObjs = capaCoordObjs.getSource().getFeatures();
+                
+                // Añadir las coordenadas objetivas a la sesión
+                for (var i = 0; i < coordObjs.length; i++)
+                {
+                    sesión.push(coordObjs[i].getGeometry().getCoordinates());
+                }
+                
+                // Enviar la sesión a /verParcela
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(sesión), 
+                    dataType: 'json',
+                    url: '/verParcela',
+                    success: function () {
+                        window.location = "/";  // si no hay problemas, redirigir a la página de inicio
+                    },
+                    error: function() {
+                        alert("Error en Ajax de verParcela.html");
+                    }
+                });
 
-        // Mostrar el calendario al hacer click en el botón de elegir fecha
-        $('#peticiónID').click(function() {
-            calendario.show();
+            });
         });
 
-        // Al hacer click sobre el botón, enviar las coordenadas y la fecha a /verParcela
-        $('#submitID').click(function() {
+        function mandarResultados(){
 
-            // Guardar la fecha de la sesión y el nombre de la parcela donde tendrá lugar
-            var sesión = [fecha, nombreParcela];
+            var tabla = document.getElementById("tablaResultados").rows;
+            console.log("rows: ",tabla);
+            var resultados = [];
+            for (let i = 1; i < tabla.length; i++){
+                var resultado = new Object;
 
-            // Extraer los puntos de las coordenadas objetivas
-            var coordObjs = capaCoordObjs.getSource().getFeatures();
-            
-            // Añadir las coordenadas objetivas a la sesión
-            for (var i = 0; i < coordObjs.length; i++)
-            {
-                sesión.push(coordObjs[i].getGeometry().getCoordinates());
+                var fila = tabla[i];
+                resultado.coordObj = fila.cells[0].innerText;
+                resultado.temp = fila.cells[1].innerText;
+                resultado.hum = fila.cells[2].innerText;
+                resultado.ec = fila.cells[3].innerText;
+                resultado.sal = fila.cells[4].innerText;
+                resultado.sdt = fila.cells[5].innerText;
+                resultado.epsilon = fila.cells[6].innerText;
+                resultado.tiempo = fila.cells[7].innerText;
+
+                resultados.push(resultado);
             }
-            
-            // Enviar la sesión a /verParcela
+
+            console.log("resultados: ", resultados);
+
+
             $.ajax({
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify(sesión), 
+                data: JSON.stringify(resultados), 
                 dataType: 'json',
-                url: '/verParcela',
+                url: '/mandarResultados',
                 success: function () {
-                    window.location = "/";  // si no hay problemas, redirigir a la página de inicio
+                    console.log("Mandando resultados...")               
                 },
                 error: function() {
                     alert("Error en Ajax de verParcela.html");
                 }
+            });    
+
+        }
+    var capaResultados1;
+    var capaResultados2;
+    var capaResultados3;
+    function mostrar(res) 
+    {    
+        var resultados = [ ];
+        var filas = document.getElementById("tablaResultados").rows;
+        for (let i = 1; i < filas.length; i++)
+        {
+            var coords = filas[i].cells[0].innerText;  coords = JSON.parse(coords);     //console.log("coords = ", coords); console.log("type of coords = ", typeof(coords));
+            var lon = coords[0];    // console.log("lon = ", lon); console.log("type of lon = ", typeof(lon));
+            var lat = coords[1];    // console.log("lat = ", lat); console.log("type of lat = ", typeof(lat));
+            
+            var result = filas[i].cells[res].innerText;   result = parseFloat(result); //console.log("result = ", result); console.log("type of result = ", typeof(result));
+
+            var resultado = new Object;
+            resultado.lat = lat;
+            resultado.lon = lon;
+            resultado.result = result;
+
+            resultados.push(resultado);
+        }
+
+        console.log("resultados = ", resultados);
+        
+
+        //var min = Math.min(resultados.result);     console.log("min = ", min);
+        //var max = Math.max(resultados.result);     console.log("max = ", max);
+
+        var min = 1000000000000.0;
+        var max = 0.0;
+        for (let i = 0; i < resultados.length; i++)
+        {
+            if (resultados[i].result < min)   min = resultados[i].result;
+            if (resultados[i].result > max)   max = resultados[i].result;
+        }
+        console.log("min = ", min);
+        console.log("max = ", max);
+
+        var rango = max-min;
+        console.log("rango = ", rango);
+
+        var limite1 = min + 0.33*rango;
+        var limite2 = min + 0.67*rango;
+        console.log("limite1 = ", limite1);
+        console.log("limite2 = ", limite2);
+
+        var resultados1 = [];
+        var resultados2 = [];
+        var resultados3 = [];
+        for (let i = 0; i < resultados.length; i++)
+        {
+            if (min <= resultados[i].result && resultados[i].result < limite1)  
+                resultados1.push(resultados[i]);
+            else if (limite1 <= resultados[i].result && resultados[i].result < limite2)  
+                resultados2.push(resultados[i]);
+            else
+                resultados3.push(resultados[i]);
+        }    
+        console.log("resultados1 = ", resultados1);
+        console.log("resultados2 = ", resultados2);
+        console.log("resultados3 = ", resultados3);
+
+        var puntos1 = [];
+        for (let i = 0; i < resultados1.length; i++)
+        {
+            //console.log("[resultados1[", i,"].lon = ", resultados1[i].lon);
+            //console.log("[resultados1[", i,"].lat = ", resultados1[i].lat);
+
+            puntos1.push(new ol.Feature({
+                geometry: new ol.geom.Point([resultados1[i].lon, resultados1[i].lat])
+            }))
+        }
+        console.log("puntos1 = ", puntos1);
+
+        var puntos2 = [];
+        for (let i = 0; i < resultados2.length; i++)
+        {
+            puntos2.push(new ol.Feature({
+                geometry: new ol.geom.Point([resultados2[i].lon, resultados2[i].lat])
+            }))
+        }
+        console.log("puntos2 = ", puntos2);
+
+        var puntos3 = [];
+        for (let i = 0; i < resultados3.length; i++)
+        {
+            puntos3.push(new ol.Feature({
+                geometry: new ol.geom.Point([resultados3[i].lon, resultados3[i].lat])
+            }))
+        }
+        console.log("puntos3 = ", puntos3);
+
+
+        function determinarEstilo(transparencia)
+        {    
+            var stylePuntos = new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(150, 255, 50, 0.3)'
+                }),
+                stroke: new ol.style.Stroke({
+                    width: 7,
+                    color: 'rgba(150, 255, 50, 0.8)'
+                }),
+                image: new ol.style.Circle({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(150, 255, 50, ' + transparencia.toString() + ')'
+                    }),
+                    stroke: new ol.style.Stroke({
+                        width: 10,
+                        color: 'rgba(150, 255, 50, ' + transparencia.toString() + ')'
+                    }),
+                    radius: 3
+                }),
             });
 
-        });
-    });
+            return stylePuntos;
+        }
 
-</script>
+        // Reescribir la capaTrayectoriaAct con los nuevos puntos
+        capaResultados1 = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: puntos1
+            }),
+            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
+            style: determinarEstilo(0.1)
+        });
+
+        capaResultados2 = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: puntos2
+            }),
+            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
+            style: determinarEstilo(0.3)
+        });
+
+        capaResultados3 = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: puntos3
+            }),
+            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
+            style: determinarEstilo(0.5)
+        });
+
+        // Añadir la nueva capaVector al mapa
+        map.addLayer(capaResultados1);
+        map.addLayer(capaResultados2);
+        map.addLayer(capaResultados3);
+    }
+
+        function mostrarResultado(res, ident) {
+            // Get the checkbox
+//            var checkBox = document.getElementById("checkTemp");
+            var checkbox = document.getElementById(ident);
+
+            // Get the output text
+            //var text = document.getElementById("text");
+            map.removeLayer(capaResultados1);
+            map.removeLayer(capaResultados2);
+            map.removeLayer(capaResultados3);
+
+            var checkboxes = document.getElementsByTagName('input');
+            console.log("checkboxes = ", checkboxes);
+            for (let i = 0; i < checkboxes.length; i++)
+            {
+                if (checkbox != checkboxes[i])
+                    checkboxes[i].checked = false;
+            }
+
+            
+            // If the checkbox is checked, display the output text
+            if (checkbox.checked == true)
+            {
+                mostrar(res)
+                //text.style.display = "block";
+            } 
+        }
+
+    </script>
+
 {% endblock %}   
