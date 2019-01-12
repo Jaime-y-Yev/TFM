@@ -1,4 +1,4 @@
-// Copies a BMP file
+// Analiza los píxeles RGB para calcular el VARI (un índice de la cantidad de verde)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,18 +7,18 @@
 
 int main(int argc, char *argv[])
 {
-    // ensure proper usage
+    // Asegurarse de tener una imagen para analizar
     if (argc != 2)
     {
         fprintf(stderr, "Usage: ./fotos infile \n");
         return 1;
     }
 
-    // remember filenames
+    // Guardar el nombre de la imagen
     char *infile = argv[1];
 
 
-    // open input file
+    // Abrir la imagen
     FILE *inptr = fopen(infile, "r");
     if (inptr == NULL)
     {
@@ -26,15 +26,15 @@ int main(int argc, char *argv[])
         return 2;
     }
 
-    // read infile's BITMAPFILEHEADER
+    // Leer el encabezamiento de la imagen BITMAPFILEHEADER
     BITMAPFILEHEADER bf;
     fread(&bf, sizeof(BITMAPFILEHEADER), 1, inptr);
 
-    // read infile's BITMAPINFOHEADER
+    // Leer el encabezamiento de la imagen BITMAPINFOHEADER
     BITMAPINFOHEADER bi;
     fread(&bi, sizeof(BITMAPINFOHEADER), 1, inptr);
 
-    // ensure infile is (likely) a 24-bit uncompressed BMP 4.0
+    // Comprobar que se trata de un archivo BMP 4.0 de 24 bits
     if (bf.bfType != 0x4d42 || bf.bfOffBits != 54 || bi.biSize != 40 || bi.biBitCount != 24 || bi.biCompression != 0)
     {
         fclose(inptr);
@@ -42,35 +42,55 @@ int main(int argc, char *argv[])
         return 4;
     }
 
-    // determine padding for scanlines
+    // Determinar el colchón
     int padding = (4 - (bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
 
-    int verde = 0;
+	float vari = 0.0;
+	
+	int numPixelesTotal = 0;
+	int numPixelesBuenos = 0;
 
-    // iterate over infile's scanlines
+    // Recorrer las filas de la imagen
     for (int i = 0, biHeight = abs(bi.biHeight); i < biHeight; i++)
     {
-	// iterate over pixels in scanline
+		// Recorrer los píxeles de la fila
         for (int j = 0; j < bi.biWidth; j++)
         {
-            // temporary storage
+            // Cada pixel contiene 3 valores
             RGBTRIPLE triple;
 
-            // read RGB triple from infile
+            // Leer el pixel actual del archivo
             fread(&triple, sizeof(RGBTRIPLE), 1, inptr);
+            
+			// Calcular el numerador y el denominador del VARI para este pixel
+			int numerador = triple.rgbtGreen - triple.rgbtRed;
+			int denominador = triple.rgbtGreen + triple.rgbtRed - triple.rgbtBlue;
+			
+			// Para evitar la excepción al dividir por 0	
+			if (denominador == 0)
+				denominador++;
+            	
+			vari = numerador/denominador;	
 
-            verde = verde + triple.rgbtGreen;
+			// Considerar que un pixel es bueno si tiene suficiente VARI
+			if (vari >= 0.6) 
+				numPixelesBuenos++;			 	
+
+            numPixelesTotal++;
         }
 
-        // skip over padding, if any
+        // Ignorar el colchón
         fseek(inptr, padding, SEEK_CUR);
     }
 
-    printf("%i", verde);
+	int porcentajeVerde = numPixelesBuenos / numPixelesTotal * 100;
+	printf("%i", porcentajeVerde);
 
-    // close infile
+    // Cerrar la imagen
     fclose(inptr);
 
-    // success
     return 0;
 }
+
+// 2019-01-05_16:11:57.405537_T.bmp gives 42 97 50
+// determine plant health by rgb

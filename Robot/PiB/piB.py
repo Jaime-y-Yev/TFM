@@ -6,39 +6,30 @@ hiloModoSyncID = 3
 hiloPotenciometroID = 4
 hiloSondeoID = 5
 hiloCamaraID = 6
+hiloVideoID = 7
 matarHilos = 'o'
 
 
 import json
-import time
+from time import sleep, monotonic
+import globalesPi
 
-import globalesPiB
+import sys
+sys.path.insert(0, '/home/pi/TFM/Robot')
+from comandosParaArduino import *
+from mqttPi import pubMQTT, subMQTT
 
-from mqttPiB import pubMQTT, subMQTT
-
-
-from comandosParaArduinoB import *
-from time import sleep
-
-# Sondeo
 import RPi.GPIO as GPIO
 from sondeo import sondear
-import os
 import subprocess
-pigpioProceso = subprocess.Popen(['sudo', 'pigpiod'], shell=False)
-from camara import tomarFotos
 
-##from actuador import leerPotenciometro as actuador_leerPotenciometro
-##from jaula import servoPWM as jaula_servoPWM
 import actuador
 import jaula
-#from actuador import *
-#from jaula import *
 
 import bateria
 
+import camara
 import moverCamara
-
 
 class Hilo(threading.Thread):
 
@@ -50,7 +41,7 @@ class Hilo(threading.Thread):
 		
 		print("Comenzando hilo ", end='')
 			
-		# Se mata los procesos facilmente con un hilo adicional----------------------------------   
+		# Matar el resto de hilos------------------------------------------------------------------   
 		if self.threadID == hiloMatarID:
 			print("Matar")
 
@@ -58,151 +49,202 @@ class Hilo(threading.Thread):
 				global matarHilos
 				matarHilos = input() # utilizar la entrada de teclado             
 				if matarHilos == 'm':
-					globalesPiB.matarPotenciometro = True
-					pubMQTT('RobotServidor/coordObjMedicion', json.dumps({"matar": "m"}))
-					pubMQTT('control/ServidorRobot', json.dumps({"matar": "m"}))
-					#pigpioProceso.kill()
-					pigpioKillProceso = subprocess.Popen(['sudo', 'killall', 'pigpiod'], shell=False)
-					os.system("sudo kill %d"%(pigpioProceso.pid))
+					globalesPi.expandirActuador = False
+					pubMQTT('ServidorRobot/modoB', json.dumps({"matar": "m"}))
+					pubMQTT('ServidorRobot/moverCamara', json.dumps({"matar": "m"}))
+					pubMQTT('RobotRobot/coordObj', json.dumps({"matar": "m"}))
 					break
 
 			print("Terminando hilo Matar")
 	   
-		# Mandar estados de PiB y ArduinoB a Servidor----------------------------------------
+		# Mandar estados de PiB y ArduinoB a Servidor-----------------------------------------------
 		elif self.threadID == hiloEstadosID:
 			print("Estado")
 			
-			# iniciar el variable local con un valor imposible para ejecutar el proceso la primera vez
+			# Iniciar la variable local con un texto vacio para ejecutar el proceso la primera vez
 			estadoPiB = 0
 			estadoArduinoB= 0
 			while True:
 
-				if estadoPiB != globalesPiB.estadoPiB:# solo mandar estados de PiB cuando había un cambio en PiB
-					pubMQTT("control/estadoPiB",json.dumps(globalesPiB.estadoPiB)) # mandar información del PiB a Servidor
-					estadoPiB = globalesPiB.estadoPiB # actualizar el variable local para poder reinicar el proceso
-					print(globalesPiB.estadoPiB)
+				if estadoPiB != globalesPi.estadoPiB:									 # solo mandar estados de PiB cuando había un cambio en PiB
+					pubMQTT("RobotServidor/estado/PiB",globalesPi.estadoPiB) 			 # mandar información del PiB a Servidor
+					estadoPiB = globalesPi.estadoPiB 									 # actualizar la variable local para poder reinicar el proceso
 					
-				if estadoArduinoB != globalesPiB.estadoArduinoB:# solo mandar estados de ArduinoA cuando había un cambio en ArduinoB
-					pubMQTT("control/estadoArduinoB",json.dumps(globalesPiB.estadoArduinoB)) # mandar infromación de ArduinoB a Servidor
-					estadoArduinoB = globalesPiB.estadoArduinoB # actualizar el variable local para poder reinicar el proceso
-					print(globalesPiB.estadoArduinoB)
+				if estadoArduinoB != globalesPi.estadoArduinoB:							 		   # solo mandar estados de ArduinoA cuando había un cambio en ArduinoB
+					pubMQTT("RobotServidor/estado/ArduinoB",globalesPi.estadoArduinoB) 			   # mandar infromación de ArduinoB a Servidor
+					estadoArduinoB = globalesPi.estadoArduinoB 									   # actualizar la variable local para poder reinicar el proceso
 
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo
 				if matarHilos == 'm':
 					break           
 			
-			print("Terminando hilo Control")
+			print("Terminando hilo Estados")
 	   
-		# Recibir comandos del Servidor-------------------------------------------------------- 
+		# Recibir comandos del Servidor---------------------------------------------------------------
 		elif self.threadID == hiloControlID:
 			print("Control") 
 
 			while True:
-				
-				# Utilizar MQTT para recibir cambios de modo o marchaParo estados
-				subMQTT("control/ServidorRobot")  
+							
+				# Utilizar MQTT para recibir cambios de modo o comandos para mover la camara manualmente
+				subMQTT([("ServidorRobot/modoB",1),("ServidorRobot/moverCamara",1)])
 		
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo 
 				if matarHilos == 'm':
-					pubMQTT("control/ServidorRobot", "m")
 					break          
 			
 			print("Terminando hilo Control")
 		
-		# Sincronizar modos del Arduino, PiB y Servidor---------------------------------------
+		# Sincronizar modos del Arduino, PiB y Servidor-----------------------------------------------
 		elif self.threadID == hiloModoSyncID:
 			print("ModoSync")
 			
-			modo = globalesPiB.modo
-			#modo = 9 # iniciar el variable local con un valor imposible para entrar sincronización
+			# Iniciar el reloj y asignar la frecuencia de vigilación del Arduino
+			tiempoInicial = monotonic()
+			intervaloVigilarArduino = 10
+				
+			modo = globalesPi.modo
 			while True:
 				
-				# Utilizar el cambio de modos para sincronizar el modo de ArduinoA
-				if modo != globalesPiB.modo: 
-					
-					# Informar el usuario sobre el cambio de los modos
-					globalesPiB.estadoPiB = "Cambio de modos detectado. Cambiando modo de PiB..."
-					
-					modo = globalesPiB.modo # guardar el modo corriente en un variable, para poder hacer el flanco otra vez
-					globalesPiB.estadoPiB = "modoPiB: " + str(modo)
+				if monotonic() - tiempoInicial >= intervaloVigilarArduino:
+					vigilarModoArduino()
+					tiempoInicial = monotonic()
+																
+				if modo != globalesPi.modo: 
+					# Informar el usuario sobre el cambio de los modos					
+					modo = globalesPi.modo # guardar el modo actual en una variable, para poder hacer el flanco otra vez
+					globalesPi.estadoPiB = "Cambiando modo a "  + str(globalesPi.modo)
 					
 					# Se utiliza MQTT para publicar el modo sincronizado a Servidor
-					pubMQTT("control/RobotServidor/modo", globalesPiB.modo)
+					pubMQTT("RobotServidor/modo/escribir", globalesPi.modo)
 					
-					if globalesPiB.modo == MODO_EMERGENCIA:
+					# Desconectar la batería si hay una emergencia					
+					if globalesPi.modo == MODO_EMERGENCIA:
 						bateria.desconectar()
 					else:
 						bateria.conectar()
-
 				
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo 
 				if matarHilos == 'm':
 					break
 				
-			print("Terminando hilo modo")
+			print("Terminando hilo ModoSync")
 		
-		# Potenciometro---------------------------------------
+		# Potenciometro-------------------------------------------------------------------------------
 		elif self.threadID == hiloPotenciometroID:
 			print("Potenciometro")
-				
-			actuador.leerPotenciometro()
-							
-			# Mater hilos seguramente utilizando la entrada de "m" en terminal 
-			#if matarHilos == 'm':
-			#	break
 			
-			print("Terminando hilo potenciometro")
+			while True:
+							
+				if globalesPi.expandirActuador == True:
+					actuador.leerPotenciometro()
+				
+				# Matar este hilo 
+				if matarHilos == 'm':
+					break				
+			
+			print("Terminando hilo Potenciometro")
 		
-		elif self.threadID == hiloSondeoID:#-------------------------------------------------------------
+		# Ejecutar sondeo, iniciado por PiA------------------------------------------------------------
+		elif self.threadID == hiloSondeoID:
 			print("Sondeo")
 					
 			while True:
 				sleep(1)
-				print("In Hilo Sondeo globalesPiB.modo =", globalesPiB.modo)
 				
 				# Sólo activar la jaula y actuador en el modo de sondeo 
-				if globalesPiB.modo == MODO_SONDEO:
+				if globalesPi.modo == MODO_SONDEO:
 					
 					print("Sondeo iniciado")
 					
-					subMQTT('RobotServidor/coordObjMedicion') # need globalesPiB.coordObj
-					
-					sondear()
-					
-					tomarFotos()
-										
-					globalesPiB.modo = MODO_INACTIVO 
+					globalesPi.sondeoTerminado = 0
 
-				if matarHilos == 'm':   
+					# Conjelar el hilo hasta obtener coordObj de PiA
+					subMQTT(('RobotRobot/coordObj',2)) 
+					
+					sleep(1)
+					
+					resultadosSondeoDict = sondear(globalesPi.coordObj) # revelar la jaula, obtener mediciones del sensor, retraer la jaula
+
+					# Si hay un problema con la expansión del actuador, notificar piA (que reinicia el proceso si reintentoSondeo < 2)					
+					if globalesPi.problemaExpandir == True:
+						globalesPi.sondeoTerminado = 2
+						pubMQTT('RobotRobot/sondeoTerminado', 2,retainMess=False)
+						globalesPi.problemaExpandir = False
+					
+					# Si no hay un problema con la expansión, tomar las fotos
+					elif globalesPi.problemaExpandir == False:
+												
+						sleep(1)
+
+						# Informar PiA que el sondeo se realizó con éxito
+						globalesPi.sondeoTerminado = 1
+						pubMQTT('RobotRobot/sondeoTerminado', 1,retainMess=False)
+						
+						# Tomar las fotos y hacer un análisis de la cantidád de verde
+						verdesDict, fotoI, fotoD = camara.tomarFotos()
+
+						# Añadir los resultados de las fotos a los resultados de sondeo
+						medicionesDict = {**resultadosSondeoDict, **verdesDict}
+
+						# Mandar los resultados al servidor
+						globalesPi.estadoPiB = "Mandando resultados al servidor"
+						print("Mandando resultados al servidor: ", resultadosSondeoDict)
+						pubMQTT('RobotServidor/resultados/medidas', json.dumps(medicionesDict))
+						sleep(1)
+
+						pubMQTT('RobotServidor/resultados/fotos/I', fotoI)
+						sleep(1)
+						
+						pubMQTT('RobotServidor/resultados/fotos/D', fotoD)
+						sleep(1)
+						
+						# Cambiar modo de PiB a MODO_INACTIVO 
+						globalesPi.modo = MODO_INACTIVO
+								
+				# Matar este hilo 
+				if matarHilos == 'm':
 					jaula.servoPWM.stop()
-	##                    GPIO.cleanup()    
 					break
 				
 			print("Terminando hilo Sondeo")  
 		
-		elif self.threadID == hiloCamaraID:#-------------------------------------------------------------
+		# Hilo que ejecuta el movimiento de la cámara durante la navegación manual ----------------------
+		elif self.threadID == hiloCamaraID:
 			print("Camara")
 			
 			while True:
 										
-				if (globalesPiB.modo == MODO_MANUAL):
-					moverCamara.moverServoWeb(globalesPiB.comandoCamara)
-
+				if (globalesPi.modo == MODO_MANUAL):
+					moverCamara.moverServoWeb(globalesPi.comandoCamara)
+				
+				# Matar este hilo 
 				if matarHilos == 'm':   
 					break
 				
-			print("Terminando hilo Sondeo")  
+			print("Terminando hilo Camara")  
+		
+		# Transmite en vivo el video durante la navegación manual  --------------------------------------
+		elif self.threadID == hiloVideoID:
+			print("Video")
+			
+			while True:
+										
+				if (globalesPi.modo == MODO_MANUAL):
+					camara.mostrarVideo()
+				
+				# Matar este hilo 
+				if matarHilos == 'm':   
+					break
+				
+			print("Terminando hilo Video") 
 								
-	
+
 
 # Hilo principal que arranca los demás hilos
 print("Comenzando hilo Principal")           
 
-# Al encender Pi, actualizar su modo según el servidor enviando
-# Sincronizar modos antes de empezar hilos
-pubMQTT("control/RobotServidor/syncModo", 1)   
-
-# Crear cada hilo
+# Crear los hilos
 hiloMatar = Hilo(hiloMatarID)
 hiloEstados = Hilo(hiloEstadosID)
 hiloControl = Hilo(hiloControlID)
@@ -210,8 +252,9 @@ hiloModoSync = Hilo(hiloModoSyncID)
 hiloPotenciometro = Hilo(hiloPotenciometroID)
 hiloSondeo = Hilo(hiloSondeoID)
 hiloCamara = Hilo(hiloCamaraID)
+hiloVideo = Hilo(hiloVideoID)
 
-# Iniciar cada hilo
+# Empezar los hilos
 hiloMatar.start()
 sleep(0.25)
 hiloEstados.start()
@@ -220,11 +263,16 @@ hiloControl.start()
 sleep(0.25)
 hiloModoSync.start()
 sleep(0.25)
+
+# Al encender Pi, actualizar su modo según el modo general del sistema
+pubMQTT("RobotServidor/modo/leer",1) 
+
 hiloPotenciometro.start()
 sleep(0.25)
 hiloSondeo.start()
 sleep(0.25)
 hiloCamara.start()
+sleep(0.25)
+hiloVideo.start()
 
-        
 

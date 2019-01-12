@@ -1,11 +1,20 @@
-import pigpio
-#import subprocess
-#pigpioProceso = subprocess.Popen(['sudo', 'pigpiod'], shell=False)
-
+import subprocess
 from time import sleep
-import globalesPiB
+import globalesPi
 
 
+import pigpio
+
+print("Matando el proceso de pigpiod")
+subprocess.Popen(['sudo', 'killall', 'pigpiod'], shell=False)
+	
+sleep(1)
+
+print("Reiniciando el proceso de pigpiod")
+subprocess.Popen(['sudo', 'pigpiod'], shell=False)
+sleep(1)
+
+# Dependiendo del servo (de giro horizontal y de giro vertical), los límites de movimiento son distintos
 pinServoID = 19
 pinServoAA = 26
 
@@ -17,36 +26,39 @@ pulsoLimiteArriba = 1700
 pulsoLimiteAbajo = 2400
 pulsoCentroAA = 2000
 
-resolucion = 100
 
 pi = pigpio.pi()
 
 if not pi.connected:
-    print("not connected")
+    print("Pigpio no conectado")
 
 def moverServo(pinServo, posicion):
-	print("so fluffy...what a cat", pinServo)
 	
 	if pinServo == pinServoID:
+		servoUtilizado = "ID"
 		limiteMin = pulsoLimiteDerecha
 		limiteMax = pulsoLimiteIzquierda
 	elif pinServo == pinServoAA:
+		servoUtilizado = "AA"		
 		limiteMin = pulsoLimiteArriba
 		limiteMax = pulsoLimiteAbajo
+		
+	print("Moviendo el servo ", servoUtilizado)
 
+	# Vigilar que el servo no sobrepasa sus límites
 	if (posicion < limiteMin or posicion > limiteMax):
 		if posicion < limiteMin:
 			if pinServo == pinServoAA:
-				globalesPiB.ultimoPulsoAA = limiteMin
+				globalesPi.ultimoPulsoAA = limiteMin
 			elif pinServo == pinServoID:
-				globalesPiB.ultimoPulsoID = limiteMin
+				globalesPi.ultimoPulsoID = limiteMin
 		elif posicion > limiteMax:
 			if pinServo == pinServoAA:
-				globalesPiB.ultimoPulsoAA = limiteMax
+				globalesPi.ultimoPulsoAA = limiteMax
 			elif pinServo == pinServoID:
-				globalesPiB.ultimoPulsoID = limiteMax
+				globalesPi.ultimoPulsoID = limiteMax
 			
-		print("La camara esta en un extremo")
+		print("La cámara esta en un extremo")
 		
 	else:
 		pi.set_servo_pulsewidth(pinServo, posicion)
@@ -54,53 +66,52 @@ def moverServo(pinServo, posicion):
 resolucionGiro = 100
 tiempoEntreGiro = 0.0625
 
+def posicionInicial():
+	moverServo(pinServoID, pulsoCentroID)
+	moverServo(pinServoAA, pulsoCentroAA)
+
+posicionInicial()
 
 def girarCentroIzquierda():
+	moverServo(pinServoID, pulsoLimiteIzquierda)
 	
-	for i in range(pulsoCentroID, pulsoLimiteIzquierda, resolucionGiro):
-		moverServo(pinServoID, i)
-		sleep(tiempoEntreGiro)
-
 
 def girarIzquierdaDerecha():
-	
-	for i in range(pulsoLimiteIzquierda, pulsoLimiteDerecha, -resolucionGiro):
-		moverServo(pinServoID, i)
-		sleep(tiempoEntreGiro)
+	moverServo(pinServoID, pulsoLimiteDerecha)
+
 
 def girarDerechaCentro():
+	moverServo(pinServoID, pulsoCentroID)
 	
-	for i in range(pulsoLimiteDerecha, pulsoCentroID, resolucionGiro):
-		moverServo(pinServoID, i)
-		sleep(tiempoEntreGiro)
 	
 def moverServoWeb(key):
     
 	if key == 1 or key == 2:
 		
 		if key == 1:   
-			globalesPiB.ultimoPulsoAA -= 20
+			globalesPi.ultimoPulsoAA -= 20
 		elif key == 2:   
-			globalesPiB.ultimoPulsoAA += 20
+			globalesPi.ultimoPulsoAA += 20
 		
-		moverServo(pinServoAA, globalesPiB.ultimoPulsoAA)
+		moverServo(pinServoAA, globalesPi.ultimoPulsoAA)
 
 	elif key == 3 or key == 4:
 		
 		if key == 3:   
-			globalesPiB.ultimoPulsoID += 20
+			globalesPi.ultimoPulsoID += 20
 		elif key == 4:   
-			globalesPiB.ultimoPulsoID -= 20
+			globalesPi.ultimoPulsoID -= 20
 		
-		moverServo(pinServoID, globalesPiB.ultimoPulsoID)
+		moverServo(pinServoID, globalesPi.ultimoPulsoID)
 
 
 def testGiroCompleto(): 
 	girarCentroIzquierda()
+	sleep(1)
 	girarIzquierdaDerecha()
+	sleep(1)
 	girarDerechaCentro()
 
-
-
+#testGiroCompleto()
 
 
