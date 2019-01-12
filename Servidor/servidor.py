@@ -1,90 +1,73 @@
-# Librería de hilos y códigos de cada hilo
-import threading
-hiloFlaskID = 1             
-hiloPhpLiteAdminID = 2      
-
-
-matarHilos = 'o'            # señal que mata a los hilos
 from time import sleep      # para ralentizar el checkeo de la variable matarHilos
-
-def matarHilo(proceso):
-    """Espera a la señal para matar el proceso"""
-
-    while True:
-
-        sleep(0.5)
-
-        if matarHilos == 'm':
-            subprocess.Popen("taskkill /F /T /PID %i"%proceso.pid)
-            break
-
 
 # Librerías para la ejecución de programas de Windows mediante Python
 import os
 import subprocess
 
 
+def arrancarServidor():
+    """Arrancar los procesos que constituyen el servidor """
+
+    print("Arrancando el servidor -----------------------------------------------")           
+
+    print("Arrancando el broker de MQTT Mosquitto")  
+    mosquitto = subprocess.Popen('c:/"Program Files"/mosquitto/mosquitto.exe', shell=True) 
+    #mosquitto = subprocess.Popen(['powershell.exe','c:/"Program Files"/mosquitto/mosquitto.exe'])             
+    sleep(1)
+
+    print("Arrancando la base de datos de SQLite3")  
+    phpLiteAdmin = subprocess.Popen('c:/MAMP/bin/php/php7.2.1/php.exe -S 0.0.0.0:90', shell=True, cwd='c:/MAMP/bin/phpliteAdmin')  # phpLiteAdmin: administrador de SQLite3 
+    sleep(1)
+
+    print("Arrancando la webapp de Flask")
+    os.environ["FLASK_DEBUG"] = "False"                                              # no arrancar en modo de depuración
+    flask = subprocess.Popen('flask run --host=0.0.0.0 --port=8080 --no-reload')     # arrancar la app de Flask
+    sleep(1)
+
+    return mosquitto, phpLiteAdmin, flask
+
+def apagarServidor(mosquitto, phpLiteAdmin, flask):
+    """Apagar los procesos del servidor"""
+
+    print("Apagando el servidor -----------------------------------------------")
+
+    print("Apagando la webapp de Flask")
+    subprocess.Popen("taskkill /F /T /PID %i"%flask.pid)
+    sleep(1)
+
+    print("Apagando la base de datos de SQLite3")
+    subprocess.Popen("taskkill /F /T /PID %i"%phpLiteAdmin.pid)
+    sleep(1)
+
+    print("Apagando el broker de MQTT Mosquitto")  
+    subprocess.Popen("taskkill /F /T /PID %i"%mosquitto.pid)
+    sleep(1)
 
 
 
-class Hilo(threading.Thread):
-    
-    def __init__(self, threadID):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
+# Arrancar el servidor por lo menos una vez
+mosquitto, phpLiteAdmin, flask = arrancarServidor()
 
-    def run(self):
-
-        print("Comenzando hilo ", end='')           
-
-        # Hilo de Flask que arranca la aplicación y espera a la señal que lo mata
-        if self.threadID == hiloFlaskID: 
-            print("Flask")
-
-            os.environ["FLASK_DEBUG"] = "False" # No arrancar en modo de depuración
-            # Arrancar el proceso Flask mediante PowerShell
-            flaskProceso = subprocess.Popen('powershell.exe flask run --host=0.0.0.0 --port=8080 --no-reload') # make debug false
-            #flaskProceso = subprocess.Popen(['powershell.exe','python','app.py'], cwd='c:/users/y/documents/trabajofinmaster/tfm/servidor')
-
-            matarHilo(flaskProceso)             # esperar a la señal para matar al proceso de Flask
-            
-            print("Terminando hilo Flask")
-
-
-        # Hilo del administrador de SQLite llamado phpLiteAdmin (no es imprescindible para el funcionamiento del servidor, pero ayuda a visualizar la base de datos) 
-        elif self.threadID == hiloPhpLiteAdminID:
-            print("phpLiteAdmin")  
-
-            # Arrancar el proceso de phpLiteAdmin mediante PowerShell
-            phpLiteAdminProceso = subprocess.Popen(['powershell.exe','c:/MAMP/bin/php/php7.2.1/php.exe', '-S 0.0.0.0:90'], cwd='c:/MAMP/bin/phpliteAdmin')
-            
-            matarHilo(phpLiteAdminProceso)      # esperar a la señal para matar al proceso de phpLiteAdmin
-
-            print("Terminando hilo phpLiteAdmin")
-
-          
-
-# Hilo princiapl que arranca los demás hilos
-print("Comenzando hilo Principal")           
-
-# Crear cada hilo
-hiloFlask = Hilo(hiloFlaskID)
-hiloPhpLiteAdmin = Hilo(hiloPhpLiteAdminID)
-
-# Iniciar cada hilo
-hiloFlask.start() 
-hiloPhpLiteAdmin.start()
-
-
-# Esperar a la señal introducida por el usuario mediante el teclado para matar a los hilos
+# Esperar a la señal introducida por el usuario mediante el teclado para matar o reiniciar los procesos
 while True:
 
-    sleep(0.5)
+    comando = input()       
 
-    matarHilos = input()        # recibir una señal del teclado
+    if comando == 'm' or comando == 'r':
 
-    # Si se ha recibido la señal de terminación, propagarla al resto de hilos y matar el hilo principal
-    if matarHilos == 'm':
-        break
+        if comando == 'r':
+            print("Reiniciando el servidor -----------------------------------------------")
 
-print("Terminando hilo Principal")
+        apagarServidor(mosquitto, phpLiteAdmin, flask)
+        sleep(1)
+
+        if comando == 'r':
+
+            mosquitto, phpLiteAdmin, flask = arrancarServidor()
+
+            comando = ''
+
+        elif comando == 'm':
+            break
+
+print("Servidor apagado -----------------------------------------------")
