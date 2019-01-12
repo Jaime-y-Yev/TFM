@@ -7,109 +7,84 @@ import sys
 sys.path.insert(0, '/home/pi/TFM/Robot')
 from comandosParaArduino import *
 
-broker_address = '192.168.1.132' #laptop
-#broker_address = '192.168.1.128' #piA
-#broker_address = '192.168.1.135' #piB
-#broker_address = '192.168.43.25'
+import base64
+
+
+broker_address = '192.168.1.132' 	# servidor conectado a wifi
+#broker_address = '192.168.43.198'	# servidor conectado a datos
 broker_port = 1883
 broker_timeout = 60
 
  
+def pubMQTT(topic, mensaje,retainMess=False):
+	"""Publica mensajes mediante MQTT""" 
 
-# Se utiliza MQTT para mandar coordAct, modo, trayectoria y información(estados) 
-def pubMQTT(topic, mensaje,retainMess=False): 
+	pub = mqtt.Client()                           
+	pub.connect(broker_address, broker_port, broker_timeout)         
+	pub.loop_start()                                    
+	print("--->--->--->--->--->--->--->--->--->--->--->---> Pi pub al topic ", topic, " el mensaje ", mensaje)
 
-    def on_connect(client, userdata, flags, rc): # definir la acción que hacer al conectar al broker. En este caso es imprimir el mensaje abajo
-        print("Pub MQTT conectado al topic " + topic + " con código ", rc) 
+	if topic == "RobotServidor/resultados/fotos/I" or topic == "RobotServidor/resultados/fotos/D":
+		f = open(mensaje, 'rb')
+		fileContent = f.read()
+		byteArr = bytes(fileContent)
+		result = base64.b64encode(byteArr)
+		pub.publish(topic, result, 0)
+		print("Foto publicada al servidor")	
+	else:	
+		pub.publish(topic, str(mensaje), retain=retainMess)            
 
-    pub = mqtt.Client()                           # definir el cliente
-    pub.on_connect = on_connect                  # definir que funcion ejecutar al conectar    
-    pub.connect(broker_address, broker_port, broker_timeout)         # indicar cómo conectar
-    pub.loop_start()                              # empezar el bucle      
-    print("»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»»» Pi pub al topic ", topic, " el mensaje ", mensaje)
-    pub.publish(topic, str(mensaje), retain=retainMess)        # publicar el mensaje a un topic indicado en la llamada de la fucnión     
-    pub.disconnect()                              # desconectar    
-    pub.loop_stop()                               # parar el bucle para poder salir de la función y no bloquear el hilo     
+	pub.disconnect()                                  
+	pub.loop_stop()                                    
     
+               
 
-import base64
-
-def pubMQTTF(topic, mensaje):
-
-	def on_publish(mosq, userdata, mid):
-		mosq.disconnect()
-
-	client = mqtt.Client()                           # definir el cliente
-
-	client.on_publish = on_publish
-
-	client.connect(broker_address, 1883, 60)
-
-	f = open(mensaje, 'rb')
-	fileContent = f.read()
-	byteArr = bytes(fileContent)
-	result = base64.b64encode(byteArr)
-	#client.publish(topic, byteArr, 0)
-	client.publish(topic, result, 0)
-	print("published foto")
-
-	client.loop_forever()                  
-
-#Se utiliza MQTT para recibir comandos de modo, coordObj, y geometría
 def subMQTT(topics):
+	"""Se subscribe a mensajes mediante MQTT""" 
 
-	def on_connect(client, userdata, flags, rc):  # definir la acción que hacer al conectar al broker. En este caso es imprimir el mensaje abajo        
-		print("Sub MQTT conectado al topic " + str(topics) + " con código ", rc)
+	def on_connect(client, userdata, flags, rc):  # notificar que se ha conectado al topic        
+		print("Sub MQTT conectado al topic " + str(topics))
 		sub.subscribe(topics)
 
-	def on_message(client, userdata, message):    # definir la acción que hacer al rebir el mensaje de broker. En este caso es decodificar el mensaje y guardarlo en un variable global 
+	def on_message(client, userdata, message):    # dependiendo del topic, procesar el mensaje de forma distinta 
 
-		mensaje = message.payload.decode("utf-8") # decodificar mensaje json
-		print("«««««««««««««««««««««««««««««««««««««««««««««««« PiA sub en topic: ",message.topic ," mensaje ", mensaje)
+		mensaje = message.payload.decode("utf-8") 
+		print("<---<---<---<---<---<---<---<---<---<---<---<--- Pi sub en topic ",message.topic ," el mensaje ", mensaje)
 
-		if message.topic == "ServidorRobot/modoA":
-			print("recibiendo modo")
+		if mensaje == '{"matar": "m"}':
+			sub.disconnect()
+
+		if message.topic == "ServidorRobot/modoA":		# cambia el modo de PiA
 
 			if globalesPi.modo != MODO_EMERGENCIA and not (globalesPi.modo == MODO_SONDEO and int(mensaje) == MODO_NAVEGACION):
 				globalesPi.modo = int(mensaje)
 
 			if globalesPi.modo == MODO_NAVEGACION:
 				globalesPi.permitirSubCoordObj = True 
-			
-			
-			sub.disconnect()
 		
-		if message.topic == "ServidorRobot/modoB":
+		if message.topic == "ServidorRobot/modoB":		# cambia el modo de PiB
 			
 			if globalesPi.modo != MODO_EMERGENCIA and not (globalesPi.modo == MODO_SONDEO and int(mensaje) == MODO_NAVEGACION):
 				globalesPi.modo = int(mensaje)
-			
-			sub.disconnect()
 		
-		if message.topic == "ServidorRobot/marchaParo":
+		if message.topic == "ServidorRobot/marchaParo":		# señal de marcha o paro que inicia o detiene la navegación
 			globalesPi.marchaOparo = int(mensaje)
-			sub.disconnect()
 
-		if message.topic == "ServidorRobot/antena":
+		if message.topic == "ServidorRobot/antena":			# cambia la antena utilizada en la navegación (RTKlib o móvil)
 			globalesPi.antena = int(mensaje)
-			globalesPi.estadoPiA = "Antena " + str(globalesPi.antena)
-			print("globalesPi.antena ", globalesPi.antena)
-			sub.disconnect()
-
-		
-		if message.topic == "movilRobot/coordAct":
+			globalesPi.estadoPiA = "Cambiado a antena " + str(globalesPi.antena)
+			
+		if message.topic == "movilRobot/coordAct":			# recibe coordAct del móvil
 
 			mensajeJSON = json.loads(mensaje) 
 
 			lon = float(mensajeJSON["lng"])
 			lat = float(mensajeJSON["lat"])
-			coordActCan = [float(lon),float(lat)]
+			coordActCan = [lon,lat]
 			
-			globalesPi.coordActCandidato = coordActCan
-			
-			sub.disconnect()
+			globalesPi.coordActCandidato = coordActCan		# guardar en la lista de candidatos de coordAct
 
-		if message.topic == "ServidorRobot/coordObj_geometría":
+		if message.topic == "ServidorRobot/coordObj_geometría":		# recibir coordObj y el contorno de la parcela
 
 			coordObj_geometria = json.loads(mensaje)
 
@@ -127,37 +102,26 @@ def subMQTT(topics):
 			globalesPi.coordObj = coordObj 
 			globalesPi.geometria = geometria
 			globalesPi.idSesion = idSesion
-			sub.disconnect()
   
-		if message.topic == "ServidorRobot/navManual":
-			globalesPi.permitirComandoManual= True
+		if message.topic == "ServidorRobot/navManual":		# recibir los comandos de la navegación manual para mover los motores (PiA)
+			globalesPi.permitirComandoManual = True
 			globalesPi.comandoManual = mensaje
 
-
-		if message.topic == "RobotRobot/sondeoTerminado":
+		if message.topic == "RobotRobot/sondeoTerminado":	# recibir el estado de sondeo de PiB
 			globalesPi.sondeoTerminado = int(mensaje)
-			print("He recibido sondeTerminado en mqtt")
-			sub.disconnect()
-
-		if message.topic == "RobotServidor/resultados/medidas":
-			resultados = json.loads(mensaje)
-			sub.disconnect()
-				
 			
-		if message.topic == "ServidorRobot/moverCamara":
-			print("in sub moverCamara ")
-			#moverCamara.moverServoWeb(int(control["moverCamara"]))
+		if message.topic == "ServidorRobot/moverCamara":	# recibir los comandos de la navegación manual para mover la cámara (PiB)
 			globalesPi.comandoCamara = int(mensaje)
-			sub.disconnect()
 			
-		if message.topic == "RobotRobot/coordObj":
+		if message.topic == "RobotRobot/coordObj":			# recibir coordObj de PiA para asignarla a las medidas recogidas por PiB
 			coordObj_idSesion = json.loads(mensaje)
 			globalesPi.coordObj = coordObj_idSesion["coordObj"]
 			globalesPi.idSesion = coordObj_idSesion["idSesion"]
-			sub.disconnect()
+		
+		sub.disconnect()
 	
 
-	sub = mqtt.Client()                               # definir el cliente que envíe y recibe del Servidor
+	sub = mqtt.Client()                               # definir el cliente que envía y recibe del Servidor
 	sub.on_connect = on_connect                       # definir que función ejecutar al conectar
 	sub.on_message = on_message                       # definir que función ejecutar al recibir el mensaje del broker
 	sub.connect(broker_address, broker_port, broker_timeout)             # indicar cómo conectar
