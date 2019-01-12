@@ -17,10 +17,6 @@ def pendiente(linea): # linea = [[x1,y1],[x2,y2]]
 # Hallar la intersección con el eje y
 def yint(punto, pendiente):
 	
-	print("punto: " ,punto)
-	print("type punto: " ,type(punto))
-
-
 	# Extraer las coordenadas individuales del "punto"
 	x = punto[0]
 	y = punto[1]
@@ -87,37 +83,38 @@ def crearPoliEc(geometría):
         
         # Añadir la pendiente, intersección con eje y, las coordenadas de la línea a una lista
         poliEc = poliEc + [(segmentoPoliPendiente,segmentoPoliYint,segmentoPoli[0],segmentoPoli[1])] 
+        print("Lista de pendiente,Yint,puntos de segmento de cada parte del polígono: ",poliEc)
         
     return poliEc
 
 # Hallar intersecciones entre lineas que pasan por el punto objetivo y/o punto actual
 def interseccionesValidas(lineaEc,poliEc):
     
-    pendiente1 = lineaEc[0]                                    # pendiente de nuestra linea que pasa por el objetivo
-    yint1 = lineaEc[1]                                         # yint de nuestra linea que pasa por el objetivo
-   
-    interseccionesValid = []                                   # crear una lista de intersecciones vacia
-    
-    # Pasar por cada linea del contorno hallando intersecciones y verificando si son válidas
-    for i in range (len(poliEc)):
-        
-        pendiente2 = poliEc[i][0]                              # pendiente de ith ecuacion en el polígono
-        yint2 = poliEc[i][1]                                   # yint de ith ecuacion en el polígono
-        
-        x = (yint1 - yint2) / (pendiente2 - pendiente1)        # calcular la intersección (x,y)
-        y = pendiente2 * x + yint2
-        
+	pendiente1 = lineaEc[0]                                    # pendiente de nuestra linea que pasa por el objetivo
+	yint1 = lineaEc[1]                                         # yint de nuestra linea que pasa por el objetivo
 
-        # Decidir si es una interseccion válida. Los limites son las coordenadas (extremos) del contorno
-        limitex1 = poliEc[i][2][0]
-        limitex2 = poliEc[i][3][0]
-        limitey1 = poliEc[i][2][1]
-        limitey2 = poliEc[i][3][1]
-        
-        if (limitex1 <= x <=  limitex2 or limitex2 <= x <=  limitex1) and (limitey1 <= y <=  limitey2 or limitey2 <= y <=  limitey1):
-            interseccionesValid = interseccionesValid + [[x,y]]  # añadir a la lista sólo intersecciones válidas
-    
-    return interseccionesValid
+	interseccionesValid = []                                   # crear una lista de intersecciones vacia
+
+	# Pasar por cada linea del contorno hallando intersecciones y verificando si son válidas
+	for i in range (len(poliEc)):
+		
+		pendiente2 = poliEc[i][0]                              # pendiente de ith ecuacion en el polígono
+		yint2 = poliEc[i][1]                                   # yint de ith ecuacion en el polígono
+		
+		x = (yint1 - yint2) / (pendiente2 - pendiente1)        # calcular la intersección (x,y)
+		y = pendiente2 * x + yint2
+		
+
+		# Decidir si es una interseccion válida. Los limites son las coordenadas (extremos) del contorno
+		limitex1 = poliEc[i][2][0]
+		limitex2 = poliEc[i][3][0]
+		limitey1 = poliEc[i][2][1]
+		limitey2 = poliEc[i][3][1]
+		
+		if (limitex1 <= x <=  limitex2 or limitex2 <= x <=  limitex1) and (limitey1 <= y <=  limitey2 or limitey2 <= y <=  limitey1):
+			interseccionesValid = interseccionesValid + [[x,y]]  # añadir a la lista sólo intersecciones válidas
+		print("Intersecciones válidas entre línea que pasa por coordObj y el polígono: ", interseccionesValidas)
+	return interseccionesValid
 
 
 # Poner puntos de los extremos del polígono y las intersecciones en orden. Extremos del polígono + intersecciones válidas = puntos via
@@ -158,7 +155,6 @@ def crearPuntosIntermedios(geometría,poliEc,coordAct,coordObj):
                 
                 if i == len(intersecciones):              # al terminar poniendo todas intersecciones en la nueva lista, se sale del bucle
                     break
-        
         return puntosIntermedios
     
     # Se obtiene la información de geometria de las líneas que pasan por el punto objetivo y actual para obtener sus intersecciones con el contorno:
@@ -200,14 +196,13 @@ def crearPuntosIntermedios(geometría,poliEc,coordAct,coordObj):
 
         puntosIntermedios = hallarPuntosIntermedios(interseccionesObj, geometría['poli'], 'O')
     
+    print("Intersecciones y puntos del contorno puestos en orden consecutivo: ",puntosIntermedios)
     return puntosIntermedios
 
 # Probar todas las posibles rotaciones de la lista de puntos intermedios para calcular la trayectoria con la menor distancia total
 def construirTrayectoria(puntosIntermedios, coordAct, coordObj):   
 
-	print("puntosIntermedios = ", puntosIntermedios)
-	print("En construirTrayectoria: coordAct = ", coordAct)
-	print("En construir Trayectoria: coordObj = ", coordObj)
+	print("Construyendo trayectoria con coordAct = ", coordAct ," y coordObj = ",coordObj)
 
 	from navegacion import distancia 
 
@@ -227,23 +222,15 @@ def construirTrayectoria(puntosIntermedios, coordAct, coordObj):
 		for coord in puntosIntermedios:
 			dist = distancia(coordObj_o_Act,coord)
 			distancias.append([dist,coord]) # No olvidar escribir el punto que da la distancia, no sólo la distancia
-		print("distancias in for: " ,distancias)
 
 		# En la lista de distancias elegir la distancia más pequeña y asignar ella a puntoA que falta
 		minimum = distancias[0][0]
 		puntoA = distancias[0][1]
-		print("minimum o o after for ",minimum)
 
 		for i in range(len(distancias)-1):
 			if distancias[i][0] < minimum:
-				print("en bucle de contruirTrayectoria, comparando distancias" +str(i))
 				minimum = distancias[i][0]
 				puntoA = distancias[i][1]
-				print("minimum i ",minimum)
-				print("puntoA i ",puntoA)
-		print("minimum final ",minimum)
-		print("puntoA ",puntoA)
-
 
 		return puntoA    
 
@@ -271,12 +258,9 @@ def construirTrayectoria(puntosIntermedios, coordAct, coordObj):
 					counterO = 1
 				elif counterO == 1:
 					objB = punto
-	print("actA before = ", actA)
-	print("actB before = ", actB)
 	 
 	# Si no hay intersecciones que pasan por coordAct o coordObj, llamar una función que encuentra un punto más cercano que se puede utilizar como parte de la trayectoria
 	if actA == 0 and actB == 0:
-		print("going in if actA == 0")
 		actA = sustituirPuntoFaltado(actA,actB,coordAct)  # llamamos la función con los puntos que NO tenemos (actA y/o actB en este caso)
 		actB = actA
 	if objA == 0 and objB == 0:
@@ -387,18 +371,23 @@ def construirTrayectoria(puntosIntermedios, coordAct, coordObj):
 
 # Devuelve la trayectoria que el robot utilizará para su navegación
 def crearTrayectoria(coordAct, coordObj, geometría):                               # devuelve la trayectoria óptima (menor distancia total) entre coordAct y coordObj
-    
-    poliEc = crearPoliEc(geometría)                                                # halla las ecuaciones de los segmentos del polígono
+	print("---------------------------------------------------------------------------------------------------------")
+	print("Calculando trayectoria... ")
+	print("---------------------------------------------------------------------------------------------------------")
+	poliEc = crearPoliEc(geometría)                                                # halla las ecuaciones de los segmentos del polígono
 
-    puntosIntermedios = crearPuntosIntermedios(geometría,poliEc,coordAct,coordObj) # organiza los puntos consecutivos
-    
-    if len(puntosIntermedios) != 0:
-        trayectoria = construirTrayectoria(puntosIntermedios, coordAct, coordObj) # calcula la trayectoria optima desde coordAct
-    else:
-        trayectoria = [coordAct, coordObj]
-        print("Trayectoria: ", trayectoria)
-    
-    return trayectoria
+	puntosIntermedios = crearPuntosIntermedios(geometría,poliEc,coordAct,coordObj) # organiza los puntos consecutivos
+
+	if len(puntosIntermedios) != 0:
+		trayectoria = construirTrayectoria(puntosIntermedios, coordAct, coordObj)  # calcula la trayectoria optima desde coordAct
+	else:
+		trayectoria = [coordAct, coordObj]
+		print("---------------------------------------------------------------------------------------------------------")
+		print("Trayectoria: ", trayectoria)
+		print("---------------------------------------------------------------------------------------------------------")
+
+
+	return trayectoria
 
 
 

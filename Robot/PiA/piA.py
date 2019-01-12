@@ -1,33 +1,41 @@
 import threading
 hiloMatarID = 0
 hiloRTKID = 1
-hiloCoordActID = 9
 hiloNavegarID = 2
 hiloControlID = 3
 hiloModoSyncID = 4
 hiloEstadosID = 5
 hiloArduinoID = 6
+hiloMovilID = 7
+hiloSondeoID = 8
 matarHilos = 'o'
 
 
 import json
-import time
+from time import sleep,clock,monotonic
 
-from comandosParaArduinoA import *
+import sys
+sys.path.insert(0, '/home/pi/TFM/Robot')
+from comandosParaArduino import *
+from mqttPi import pubMQTT, subMQTT
+
+from guardarPosicion import guardarCoordAct
 
 from leerGPS import *
 
-from navegacion import navegar,direccion,distancia
+from navegacion import navegar,direccion,distancia, moverReintentoSondeo, promedio
 
-import globalesPiA
-
-from mqttPiA import pubMQTT, subMQTT, subMQTTZ
+import globalesPi
 
 from trayectoria import crearTrayectoria
 
-compileUploadArduino = True
-if compileUploadArduino:
-	import actualizarCodigosDeComandos
+from actualizarCodigosDeComandos import *
+
+# Recompilar el ArduinoA al arrancar PiA para evitar problemas con la comunicación serie
+if globalesPi.resetearArduino:
+	actualizarEncabezamientoArduino(archivoPi,archivoArduinoA)
+	compilarSubirArduino()
+	globalesPi.resetearArduino = False
 
 
 class Hilo(threading.Thread):
@@ -40,17 +48,24 @@ class Hilo(threading.Thread):
 
 		print("Comenzando hilo ", end='')
 
-		# Se mata los procesos facilmente con un hilo adicional----------------------------------   
+		# Matar el resto de hilos-----------------------------------------------------------  
 		if self.threadID == hiloMatarID:
 			print("Matar")
 
 			while True:
+				
 				global matarHilos
-				matarHilos = input() # utilizar la entrada de teclado             
+				matarHilos = input() # utilizar la entrada de teclado para matar los hilos            
 
 				if matarHilos == 'm': 
-					pubMQTT("control/ServidorRobot", json.dumps({"matar": "m"}))
-					pubMQTT("navegación/coordObj_geometría", json.dumps({"matar": "m"}))
+					pubMQTT("ServidorRobot/modoA", json.dumps({"matar": "m"}))
+					pubMQTT("ServidorRobot/marchaParo", json.dumps({"matar": "m"}))
+					pubMQTT("ServidorRobot/antena", json.dumps({"matar": "m"}))
+					pubMQTT("movilRobot/coordAct", json.dumps({"matar": "m"}))
+					pubMQTT("ServidorRobot/coordObj_geometría", json.dumps({"matar": "m"}))
+					pubMQTT("RobotRobot/sondeoTerminado", json.dumps({"matar": "m"}))
+					pubMQTT("RobotServidor/resultados/medidas", json.dumps({"matar": "m"}))
+					pubMQTT("RobotRobot/coordObj", json.dumps({"matar": "m"}))
 					break
 
 			print("Terminando hilo Matar")
@@ -59,22 +74,22 @@ class Hilo(threading.Thread):
 		elif self.threadID == hiloEstadosID:
 			print("Estados")
 			
-			# iniciar el variable local con un valor imposible para ejecutar el proceso la primera vez
-			estadoPiA = 0
-			estadoArduinoA = 0
+			# Iniciar la variable local con un texto vacio para ejecutar el proceso la primera vez
+			estadoPiA = ""
+			estadoArduinoA = ""
 			while True:
+				
+				if estadoPiA != globalesPi.estadoPiA:						 # solo mandar estados de PiA cuando había un cambio en PiA
+					pubMQTT("RobotServidor/estado/PiA",globalesPi.estadoPiA) # mandar información del PiA a Servidor
+					estadoPiA = globalesPi.estadoPiA 						 # actualizar la variable local para poder reinicar el proceso
+					print(globalesPi.estadoPiA)
 
-				if estadoPiA != globalesPiA.estadoPiA:# solo mandar estados de PiA cuando había un cambio en PiA
-					pubMQTT("control/estadoPiA",json.dumps(globalesPiA.estadoPiA)) # mandar información del PiA a Servidor
-					estadoPiA = globalesPiA.estadoPiA # actualizar el variable local para poder reinicar el proceso
-					print(globalesPiA.estadoPiA)
+				if estadoArduinoA != globalesPi.estadoArduinoA:				 			# solo mandar estados de ArduinoA cuando había un cambio en ArduinoA
+					pubMQTT("RobotServidor/estado/ArduinoA",globalesPi.estadoArduinoA)  # mandar infromación de ArduinoA a Servidor
+					estadoArduinoA = globalesPi.estadoArduinoA 						    # actualizar la variable local para poder reinicar el proceso
+					print(globalesPi.estadoArduinoA)
 
-				if estadoArduinoA != globalesPiA.estadoArduinoA:# solo mandar estados de ArduinoA cuando había un cambio en ArduinoA
-					pubMQTT("control/estadoArduinoA",json.dumps(globalesPiA.estadoArduinoA)) # mandar infromación de ArduinoA a Servidor
-					estadoArduinoA = globalesPiA.estadoArduinoA # actualizar el variable local para poder reinicar el proceso
-					print(globalesPiA.estadoArduinoA)
-
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break           
 			
@@ -86,100 +101,86 @@ class Hilo(threading.Thread):
 
 			while True:
 
-				# Utilizar MQTT para recibir cambios de modo o marchaParo estados
-				subMQTT("control/ServidorRobot")  
-
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Utilizar MQTT para recibir cambios de modo, marchaParo, o de antena o comandos para mover el robot manualmente 
+				subMQTT([("ServidorRobot/modoA",1),("ServidorRobot/marchaParo",1),("ServidorRobot/antena",1),("ServidorRobot/navManual",1)])  
+				
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break
 			
 			print("Terminando hilo Control")
 
-		# Sincronizar modos del Arduino, PiA y Servidor---------------------------------------
+		# Sincronizar modos del PiA y Servidor------------------------------------------------
 		elif self.threadID == hiloModoSyncID:
 			print("ModoSync")
 			
-			modo = globalesPiA.modo # iniciar el variable local con un valor imposible para entrar sincronización
+			modo = globalesPi.modo # iniciar la variable local con un valor inicial para entrar sincronización
 			while True:
 				
-				# Utilizar el cambio de modos para sincronizar el modo de ArduinoA
-				
-				if modo != globalesPiA.modo: 
-					
+				if modo != globalesPi.modo: 										
 					# Informar el usuario sobre el cambio de los modos
-					globalesPiA.estadoPiA = "Cambio de modos detectado. Cambiando modo de PiA..."
+					modo = globalesPi.modo # guardar el modo actual en una variable, para poder detectar el flanco otra vez
+					globalesPi.estadoPiA = "Cambiando modo a " + str(globalesPi.modo)
 					
-					modo = globalesPiA.modo # guardar el modo corriente en un variable, para poder hacer el flanco otra vez
-					globalesPiA.estadoPiA = "modoPiA: " + str(modo)
-					print("PiA cambiando su modo...")
 					if modo == MODO_MANUAL:
-						globalesPiA.permitirCambioModoManual = True
-						pubMQTT("navegación/coordObj_geometría",json.dumps({"matar": "m"}))
+						globalesPi.permitirCambioModoManual = True
+				
 					# Se utiliza MQTT para publicar el modo sincronizado a Servidor
-					pubMQTT("control/RobotServidor/modo", globalesPiA.modo)
+					pubMQTT("RobotServidor/modo/escribir", globalesPi.modo)
 
 				# Si hay asincronización, hacer un reset de modos
-				if globalesPiA.modo == MODO_NAVEGACION and globalesPiA.permitirSubCoordObj == True and globalesPiA.marchaOparo == 1:
-					globalesPiA.estadoPiA = "Asincronización detectada, reseteando modos..." 
+				if globalesPi.modo == MODO_NAVEGACION and globalesPi.permitirSubCoordObj == True and globalesPi.marchaParo == True:
+					globalesPi.estadoPiA = "Asincronización detectada, reseteando modos..." 
 					
-					globalesPiA.modo = MODO_INACTIVO
-					globalesPiA.permitirSubCoordObj = True
-					globalesPiA.marchaOparo = 0
+					globalesPi.modo = MODO_INACTIVO
+					globalesPi.permitirSubCoordObj = True
+					globalesPi.marchaParo = False
 				
-
-				
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break
 				
 			print("Terminando hilo modoSync")
 		
 			   
-		# Se obtien coordenadas actuales (coordAct) del robot-----------------------------------------
+		# Se obtiene coordenadas actuales (coordAct) del robot-----------------------------------------
 		elif self.threadID == hiloRTKID:
 			print("RTK")
 			
+			#Inicializar reloj para hacer mediciones
+			globalesPi.tiempoInicio = monotonic()
 			
 			#Inicializar RTKLIB que se utiliza en el próximo paso
 			iniciarRTK()
 			
 			# Utilizar RASPIGNSS con RTKLIB para obtener y filtrar coordenadas actuales
-			tiempoInicio = time.clock()
+			tiempoInicio = clock()
 			while True:                
-				time.sleep(0.5) #was 0.5
 				
-				coordActGPS = obtenerCoordAct() # leer la posición actual del robot
-				#print("CoordAct Intermediate: " + str(coordActGPS))		
-								
+				sleep(0.3) 
 				
+				coordActGPS = obtenerCoordAct() # leer la posición actual del robot				
 				
-				#Si el GPS no puede obtener la posición dentro de cierto tiempo, se lo reinicia 
-				if (str(coordActGPS) == 'obteniendo una solucion...' and (time.clock() - tiempoInicio) > 90): # reiniciar RTKLIB si gps no encuentra los satélites
-			
-					#globalesPiA.estadoPiA = "Reiniciando RTKLIB" # informar el usuario sobre el reinicio de RTKLIB
-					
-					reiniciarRTK() 
-				   
-					time.sleep(3)# dar tiempo a GPS para reiniciar correctamente 
-
-					tiempoInicio = time.clock()
-					
+				# Si el GPS no puede obtener la posición dentro de cierto tiempo, se reinicia 
+				if (str(coordActGPS) == 'obteniendo una solucion...' and (clock() - tiempoInicio) > 90): # reiniciar RTKLIB si el gps no encuentra los satélites			
+					reiniciarRTK() 				   
+					sleep(3)                          # dar tiempo a GPS para reiniciar correctamente 
+					tiempoInicio = clock()					
 					print("Reiniciando RTK")
 				
-				if globalesPiA.antena == 0:
-					# Se guarda la coordinada actual en un variable global sin preocuparnos sobre existencia de una solución
-					globalesPiA.coordAct = coordActGPS
-				
+				if globalesPi.antena == 0: 
+					globalesPi.coordAct = coordActGPS  # se guarda la coordinada actual en un variable global sin preocuparnos sobre existencia de una solución
+								
 				# Una comprobación final de la coordenada
-				if ((coordActGPS != 'obteniendo una solucion...')) :
-																				
-					pubMQTT("navegación/coordAct",json.dumps(globalesPiA.coordAct))
+				if coordActGPS != 'obteniendo una solucion...':																				
+					pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
+					#guardarCoordAct("RTKTrayectorias0601",coordActGPS)
 
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break
 			
-			#Apagar RTK seguramente antes de ternimar el hilo RTK
+			# Apagar RTK de forma segura antes de terminar el hilo RTK
 			finalizarRTK()           
 			for i in range(20):
 				print(procesoRTK.readline())            
@@ -187,167 +188,216 @@ class Hilo(threading.Thread):
 			
 			print("Terminando hilo RTK")
 		
-		
-		elif self.threadID == hiloCoordActID:
-			print("CoordAct")
+		# Utilizar un móvil para obtener coordenadas actuales ----------------------------------------
+		elif self.threadID == hiloMovilID:
+			print("Móvil")
 			
+			# Inicializar las listas asociadas con la filtración de coordenadas recibidas por el móvil
 			coordActCandidatos = [[0,0],[0,0],[0,0]]	
 			distanciaEntreCandidatos = [1000,1000,1000]
 				
 			while True:
-				#Rellenar lista de candidatos	
-					
-				subMQTTZ("navegacion/coordAct/")
-				coordActCandidatos.append(globalesPiA.coordActCandidato) 
+				
+				# Rellenar la lista de candidatos				
+				subMQTT(("movilRobot/coordAct",1))
+				coordActCandidatos.append(globalesPi.coordActCandidato) 
 				coordActCandidatos.pop(0)
 				for i in range (len(coordActCandidatos)):
 					if i < (len(coordActCandidatos)-1):
 						distanciaEntreCandidatos[i] = distancia(coordActCandidatos[i], coordActCandidatos[i+1])
 					elif i == (len(coordActCandidatos)-1):
-						distanciaEntreCandidatos[i] = distancia(coordActCandidatos[i], coordActCandidatos[0])
-				#print("distanciaEntreCandidatos list: ", distanciaEntreCandidatos)
+						distanciaEntreCandidatos[i] = distancia(coordActCandidatos[i], coordActCandidatos[0])				
 				
-				if globalesPiA.antena == 1:
-					if max(distanciaEntreCandidatos) <= 5:
-						#globalesPiA.coordAct = promedio(coordActCandidatos) # create coordinate averaging function
-						globalesPiA.coordAct = coordActCandidatos[2]
+				# Filtrar la lista de los candidatos
+				if globalesPi.antena == 1:
+					# No devolver un coordAct hasta que el promedio de la distancia entre los candidatos sea menor que 5 m
+					if max(distanciaEntreCandidatos) <= 5: 
+						coordActMovil = promedio(coordActCandidatos)
+						globalesPi.coordAct = coordActMovil 
+					
+					# Si el promedio de la distancia entre los candidatos es mayor que 5 m, devolver un mensaje informativo
 					else:
-						globalesPiA.coordAct = 'obteniendo una solucion...'
-						#print("globalesPiA.coordAct (final!!): ", globalesPiA.coordAct)
-
-								
+						globalesPi.coordAct = 'obteniendo una solucion...'
+					
+				#guardarCoordAct("Movil",coordActMovil)
 				
-				if globalesPiA.coordAct != 'obteniendo una solucion...':
-					#print("Sending to server from antena 1:", globalesPiA.coordAct)
-					pubMQTT("navegación/coordAct",json.dumps(globalesPiA.coordAct))
+				# Mandar el coordAct válido
+				if globalesPi.coordAct != 'obteniendo una solucion...':
+					pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
 
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break
 
-
-			print("Terminando hilo CoordAct")
+			print("Terminando hilo Móvil")
 
 		
-		# Calcular trayectoria y ejecutar navegación del robot
-		elif self.threadID == hiloNavegarID:#-------------------------------------------------------------
+		# Calcular trayectoria y ejecutar navegación del robot ---------------------------------------
+		elif self.threadID == hiloNavegarID:
 			print("Navegar")      
-					 
-			contadorVigilarArduino = 4000
+			
+			# Inicializar el reloj y asignar la frecuencia de vigilación del Arduino
+			tiempoInicial = monotonic()
+			intervaloVigilarArduino = 10		 
 			while True:
 				
-				if contadorVigilarArduino >=1000:
-					contadorVigilarArduino = 0 
-					if globalesPiA.modo == MODO_EMERGENCIA:
-						comandoArduino(CAMBIAR_MODO, MODO_EMERGENCIA)	
-					modoArduino = comandoArduino(LEER_MODO)
-					if modoArduino == MODO_EMERGENCIA:
-						#print("Arduino EMERGENCIA")
-						globalesPiA.modo = MODO_EMERGENCIA
-						pubMQTT("navegación/coordObj_geometría", json.dumps({"matar": "m"}))
-
-				contadorVigilarArduino += 1 
-				
-				if globalesPiA.modo == MODO_NAVEGACION: # sólo ejecutar los próximos pasos si ArduinoA está listo para recibir comandos y si estamos en MODO_NAVEGACION
-					
-
+				# Leer el modo actual del ArduinoA y sincronizarlo con PiA, vigilando cualquier emergencia
+				if monotonic()-tiempoInicial >= intervaloVigilarArduino and globalesPi.robotDesplazando == False:
+					vigilarModoArduino()
+					tiempoInicial = monotonic()
+								
+				if globalesPi.modo == MODO_NAVEGACION: # sólo ejecutar los próximos pasos si ArduinoA está listo para recibir comandos y si estamos en MODO_NAVEGACION
 					
 					# Primero: obtenemos la información necesaria para poder ejecutar navegar()
-					if globalesPiA.marchaOparo == 0 and globalesPiA.permitirSubCoordObj == True:
-						print("Before Sub")
-						# Utilizar MQTT para sub coordObj y geometria del Servidor         
-						subMQTT("navegación/coordObj_geometría")
-						globalesPiA.estadoPiA = "Geometria recibida del Servidor... "
+					if globalesPi.marchaParo == False and globalesPi.permitirSubCoordObj == True:
+						
+						# Utilizar MQTT para recibir coordObj y geometria del Servidor         
+						subMQTT(("ServidorRobot/coordObj_geometría",2))
+						globalesPi.estadoPiA = "coordObj recibida del Servidor... "
 
 						# No calcular una trayectoria hasta recibir una solución adecuada del GPS
 						while True:
-							if globalesPiA.coordAct == 'obteniendo una solucion...' and globalesPiA.modo == MODO_NAVEGACION:
-								globalesPiA.estadoPiA = "Esperando solución para calcular trayectoria"
-								print("in While true")
-								time.sleep(1)
+							print("Esperando una solución")
+							if (globalesPi.coordAct == "obteniendo una solucion..." and globalesPi.modo == MODO_NAVEGACION) or (globalesPi.coordAct == [0,0] and globalesPi.modo == MODO_NAVEGACION):
+								globalesPi.estadoPiA = "Esperando solución para calcular trayectoria"
+								print("Esperando una solución")
+								sleep(1)
 							else:
-								print("in Else")
 								break
 													
-						if globalesPiA.modo == MODO_NAVEGACION:
+						if globalesPi.modo == MODO_NAVEGACION:
 							# Se construye la trayectoria utilizando la geometria y coordObj
-							trayectoria = crearTrayectoria(globalesPiA.coordAct, globalesPiA.coordObj, globalesPiA.geometria)
-							globalesPiA.estadoPiA = "Trayectoria calculada con éxito!"
+							trayectoria = crearTrayectoria(globalesPi.coordAct, globalesPi.coordObj, globalesPi.geometria)
+							globalesPi.estadoPiA = "Trayectoria calculada con éxito!"
 							
 							# Utiliza MQTT para publicar trayectoria al Servidor
-							trayectoriaPub = json.dumps({"trayectoria": trayectoria, "idSesion": globalesPiA.idSesion}) # se construye trayectoriPub en el formato dict
-							globalesPiA.estadoPiA = "Mandando trayectoria al Servidor..."
-							pubMQTT("navegación/trayectoria",trayectoriaPub)
+							trayectoriaPub = json.dumps({"trayectoria": trayectoria, "idSesion": globalesPi.idSesion}) # se construye trayectoriPub en el formato dict
+							globalesPi.estadoPiA = "Mandando trayectoria al Servidor..."
+							pubMQTT("RobotServidor/trayectoria",trayectoriaPub)
 
 							# Se cambia permitirSubCoordObj a False para evitar llamada de sub_coordObj_geometria() otra vez
-							globalesPiA.permitirSubCoordObj = False                                 
-					
-					
+							globalesPi.permitirSubCoordObj = False                                 
+												
 					# Segundo: utilizamos la información en el paso previo para ejecutar navegar()
-					elif globalesPiA.marchaOparo == 1 and globalesPiA.permitirSubCoordObj == False:
-						globalesPiA.estadoPiA = "En Marcha, Navegando..."
+					elif globalesPi.marchaParo == 1 and globalesPi.permitirSubCoordObj == False:
+						globalesPi.estadoPiA = "En Marcha, Navegando..."
 						
-						# La funcion principal de navegación 
-						navegar(trayectoria, globalesPiA.coordObj)
-						
+						# La función principal de navegación 
+						globalesPi.robotDesplazando = True
+						navegar(trayectoria, globalesPi.coordObj)
+						globalesPi.robotDesplazando = False
 											
-						# Se resetea algunos variables para poder reiniciar el proceso cuando termine sondeo
-						globalesPiA.marchaOparo = 0
-						globalesPiA.permitirSubCoordObj = True
+						# Se resetea algunas variables para poder reiniciar el proceso cuando termine sondeo
+						globalesPi.marchaParo = False
+						globalesPi.permitirSubCoordObj = True
+						print("cambiando a modo a MODO_SONDEO")
+						globalesPi.modo = MODO_SONDEO
 						
-						#globalesPiA.modo = MODO_SONDEO
+						globalesPi.sondeoTerminado = 0 						
 				
-				elif globalesPiA.modo == MODO_MANUAL:
-					#subMQTT("control/ServidorRobot")
-					#print ("AFTER WHILE...IN MANUAL MODE")
+				# En modo manual, el robot recibe los comandos de navegación desde la página web
+				elif globalesPi.modo == MODO_MANUAL:	
 					
-					if globalesPiA.permitirCambioModoManual == True:
+					# Primero: cambiar el modo de Arduino a MODO_MANUAL				
+					if globalesPi.permitirCambioModoManual == True:
 						comandoArduino(CAMBIAR_MODO, MODO_MANUAL)
-						globalesPiA.permitirCambioModoManual= False
-					if globalesPiA.permitirComandoManual== True:
-						comandoArduino(RECIBIR_COMANDO_MANUAL, globalesPiA.comandoManual) # mandar comando de navegacion al arduino
-						globalesPiA.permitirComandoManual= False
-						
-				elif globalesPiA.modo == MODO_SONDEO:
+						globalesPi.permitirCambioModoManual = False
+					
+					# Segundo:  Se mandar comandos de navegación al ArduinoA
+					if globalesPi.permitirComandoManual == True:
+						comandoArduino(RECIBIR_COMANDO_MANUAL, globalesPi.comandoManual) 
+						globalesPi.permitirComandoManual = False										
 				
-					comandoArduino(CAMBIAR_MODO, MODO_SONDEO)
-					if globalesPiA.reintentoSondeo == 1:
-						moverReintentoSondeo()
-				 
-				
-				# Mater hilos seguramente utilizando la entrada de "m" en terminal 
+				# Matar este hilo  
 				if matarHilos == 'm':
 					break
 				
 			print("Terminando hilo Navegar")
+		
+		# Iniciar el sondeo ejecutado por PiB
+		elif self.threadID == hiloSondeoID:#-------------------------------------------------------------
+			print("Sondeo") 
+			
+			while True:
 
-# Sincronizar modos antes de empezar hilos
-pubMQTT("control/RobotServidor/syncModo", 1)
+				if globalesPi.modo == MODO_SONDEO:
+					
+					# Sondeo no empezado, mandando coordObj y esperando a empezar el sondeo
+					if globalesPi.sondeoTerminado == 0 and globalesPi.robotDesplazando == False: 
+						sleep(5)
+						globalesPi.estadoPiA = "Esperando a empezar el sondeo..."
+						pubMQTT("RobotRobot/coordObj", json.dumps({"coordObj": globalesPi.coordObj, "idSesion": globalesPi.idSesion}))
+						subMQTT(("RobotRobot/sondeoTerminado",1))
 
+					# Sondeo terminado, reiniciar variables y cambiar el modo a MODO_INACTIVO
+					if globalesPi.sondeoTerminado == 1: # Sondeo sin error
+						globalesPi.estadoPiA = "Sondeo terminado sin error..."
+						globalesPi.sondeoTerminado = 0
+						globalesPi.modo = MODO_INACTIVO
+						globalesPi.reintentoSondeo = 0
+					
+					# Sondeo no terminado por problema de expansión del actuador, mover el robot para intentar de nuevo						
+					elif globalesPi.sondeoTerminado == 2 and globalesPi.reintentoSondeo < 2: 
+						globalesPi.estadoPiA = "Sondeo terminado con error de expansión..."
+						
+						# Mover el robot unos centímetros
+						moverReintentoSondeo()
+						
+						# Contar el número de reintentos
+						globalesPi.reintentoSondeo += 1
+						globalesPi.sondeoTerminado = 0
+						globalesPi.estadoPiA = "Número de reintentos: " + str(globalesPi.reintentoSondeo)
+					
+					# Sondeo no terminado por problema de llegar al ḿaximo numero de reintentos, cambiar modo a MODO_INACTIVO 						
+					elif globalesPi.sondeoTerminado == 2 and globalesPi.reintentoSondeo == 2: 
+						pubMQTT("RobotServidor/resultados/medidas",json.dumps({"coordObj": globalesPi.coordObj,"problema": 2 }))
+						print("Problema con sondeo, intentos=max , modo inactivo...")
+						globalesPi.modo = MODO_INACTIVO
+						sleep(5)
+						globalesPi.reintentoSondeo = 0	
+						globalesPi.sondeoTerminado = 0
+					
+					# Sondeo no terminado por problema con contracción, cambiar modo a MODO_EMERGENCIA 				
+					elif globalesPi.sondeoTerminado == 3: 
+						pubMQTT("RobotServidor/resultados/medidas",json.dumps({"coordObj": globalesPi.coordObj,"problema": 3 }))
+						globalesPi.modo = MODO_EMERGENCIA
+				
+				# Matar este hilo  
+				if matarHilos == 'm':
+					break
+				
+			print("Terminando hilo Sondeo")					
+
+				 
 # Crear los hilos
-hiloMuerte = Hilo(hiloMatarID)      # mata otros hilos
-hiloControl = Hilo(hiloControlID)   # recibe comandos de control del Servidor
-hiloModoSync = Hilo(hiloModoSyncID) # sincroniza modos
-hiloRTK = Hilo(hiloRTKID)           # obtiene posición actual del robot
-hiloCoordAct = Hilo(hiloCoordActID)           # obtiene posición actual del robot
-hiloNavegar = Hilo(hiloNavegarID)   # construye trayectoria y hace navegación
+hiloMuerte = Hilo(hiloMatarID)      
 hiloEstados = Hilo(hiloEstadosID)
+hiloControl = Hilo(hiloControlID)   
+hiloModoSync = Hilo(hiloModoSyncID) 
+hiloRTK = Hilo(hiloRTKID)           
+hiloMovil = Hilo(hiloMovilID)           
+hiloNavegar = Hilo(hiloNavegarID)   
+hiloSondeo = Hilo(hiloSondeoID)
 
 # Empezar los hilos
 hiloMuerte.start()
-time.sleep(0.25)
+sleep(0.25)
 hiloEstados.start()
-time.sleep(0.25)
+sleep(0.25)
 hiloControl.start()
-time.sleep(0.25)
+sleep(0.25)
 hiloModoSync.start()
-time.sleep(0.25)
+sleep(0.25)
 
-hiloRTK.start()
-time.sleep(0.25)
-hiloCoordAct.start()
-time.sleep(0.25)
+# Al encender Pi, actualizar su modo según el modo general del sistema
+pubMQTT("RobotServidor/modo/leer", 1)
 
+#hiloRTK.start()
+#sleep(0.25)
+hiloMovil.start()
+sleep(0.25)
 hiloNavegar.start()
+sleep(0.25)
+hiloSondeo.start()
 
 
