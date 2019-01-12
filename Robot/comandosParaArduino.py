@@ -145,7 +145,7 @@ def comandoArduino(comando, valor1=None, valor2=None):
 					
 					# Si se ha recibido uno de los cinco modos, devolverlo
 					if modo == MODO_EMERGENCIA or modo == MODO_INACTIVO or modo == MODO_NAVEGACION or modo == MODO_SONDEO or modo == MODO_MANUAL:
-						globalesPi.estadoArduinoB = "Modo: " + str(modoArduino) 
+						globalesPi.estadoArduinoB = "Modo: " + str(modo) 
 						print("«---------- El modo actual del Arduino es ", modo)
 						numExcepciones = 0
 						return modo
@@ -160,7 +160,7 @@ def comandoArduino(comando, valor1=None, valor2=None):
 
 					# Si se ha recibido el modo que se envíó, devolverlo
 					if modo == valor1:
-						globalesPi.estadoArduinoB = "Cambiando modo a " + str(modoArduino) 
+						globalesPi.estadoArduinoB = "Cambiando modo a " + str(modo) 
 						print("«---------- El Arduino ha cambiado su modo a ", modo)
 						numExcepciones = 0
 						return modo
