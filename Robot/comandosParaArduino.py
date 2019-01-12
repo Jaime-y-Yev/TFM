@@ -31,9 +31,9 @@ RECIBIR_COMANDO_MANUAL = 40
 ### FINAL DE CÓDIGOS --- NO MODIFICAR ESTA LÍNEA ###
 
 import sys
-sys.path.insert(0, '/home/pi/TFM/Robot/PiA')
+sys.path.insert(0, '/home/pi/TFM/Robot/PiB')
 
-import globalesPiA
+import globalesPi
 
 # TODO: automatizar la actualización de los caracteres de inciación y terminación en comandos.h
 CARACTER_DE_INICIACION = 'X'
@@ -121,15 +121,10 @@ def comandoArduino(comando, valor1=None, valor2=None):
 			# Leer la respuesta del Arduino para confirmar que no ha habido problemas de comuniación
 			respuesta = str(arduino.readline())
 			
-			#print("after respuesta = ", respuesta)
-
 			# Esperar a que se reciban todos los bytes de la respuesta, paralizando la función hasta que queden cero bytes en el búfer de entrada
 			while True:
 				if arduino.in_waiting == 0:
 					break
-
-			#print("after while")
-
 			
 			# El Arduino devuelve una respuesta de la forma b'xyz', así que quitar b' del principio y ' del final
 			respuesta = respuesta[2:len(respuesta)-5]   
@@ -141,9 +136,6 @@ def comandoArduino(comando, valor1=None, valor2=None):
 				
 				# Acceder al contenido de la respuesta entre los caracteres de iniciación y de terminación
 				respuesta = respuesta[1:len(respuesta)-1]
-				#print("respuesta:",respuesta)
-				
-				#print("comando:",comando)
 
 				# La lectura del modo debe responderse con uno de los cinco modos
 				if comando == LEER_MODO:
@@ -153,7 +145,8 @@ def comandoArduino(comando, valor1=None, valor2=None):
 					
 					# Si se ha recibido uno de los cinco modos, devolverlo
 					if modo == MODO_EMERGENCIA or modo == MODO_INACTIVO or modo == MODO_NAVEGACION or modo == MODO_SONDEO or modo == MODO_MANUAL:
-						print("«---------- Modo de Arduino es ", modo)
+						globalesPi.estadoArduinoB = "Modo: " + str(modoArduino) 
+						print("«---------- El modo actual del Arduino es ", modo)
 						numExcepciones = 0
 						return modo
 					else:
@@ -167,34 +160,23 @@ def comandoArduino(comando, valor1=None, valor2=None):
 
 					# Si se ha recibido el modo que se envíó, devolverlo
 					if modo == valor1:
-						print("«----------Arduino ha cambiado modo a ", modo)
+						globalesPi.estadoArduinoB = "Cambiando modo a " + str(modoArduino) 
+						print("«---------- El Arduino ha cambiado su modo a ", modo)
 						numExcepciones = 0
 						return modo
 					else:
 						print("Comunicación serie: Error al cambiar el modo del Arduino")
 				
-				# La confirmación de llegada debe responderse con su estado (0 ó 1)
+				# La confirmación de llegada debe responderse con su estado (0 ó 1), el caso de navegación del Arduino, y su dirección actual
 				elif comando == CONFIRMAR_DATOS:
 
-
-
-					# Convertir la llegada de caracter a un entero   
+					# Dividir la respuesta en los parámetros deseados   
 					llegada = int(respuesta[0])
 					casoNavegacion = int(respuesta[1])
 					direccionAct = int(respuesta[2:])
-					
-					#print("llegada = ", llegada)
-					#print("casoNavegacion = ", casoNavegacion)
-					#print("direccionAct = ", direccionAct)
-
-					
-					# Si se ha recibido el estado de la llegada, devolverlo
+										
+					# Devolver el estado de la llegadalo, el caso de navegación, y la dirección actual
 					if (llegada == 0 or llegada == 1) and (0 <= casoNavegacion and casoNavegacion <= 9) and (0 <= direccionAct and direccionAct <= 359):
-
-						#if llegada == 0:
-							#print("Comunicación serie: Arduino NO HA LLEGADO todavía al objetivo actual")
-						#elif llegada == 1:
-							#print("Comunicación serie: Arduino HA LLEGADO al objetivo actual")
 						
 						if casoNavegacion == 0:
 							casoNavegacion = "Caso navegación: desconocido"
@@ -258,28 +240,22 @@ def comandoArduino(comando, valor1=None, valor2=None):
 			if numExcepciones >= 7:
 				numExcepciones = 0
 				compilarSubirArduino()
-				#globalesPiA.resetearArduino = True
-				#break
+				vigilarModoArduino()
 		
-def vigilarModoArduino(): 
+def vigilarModoArduino():
+	"""Asegurarse de que los modos de la RPi y el Arduino están sincronizados, y que el Arduino no tiene una emergencia"""
+	 
 	sleep(1)
 	modoArduino = comandoArduino(LEER_MODO)
-	print("Modo de PiA.....................................................",globalesPiA.modo)
-	globalesPiA.estadoArduinoA = "Modo: " + str(modoArduino) 
 
 	if modoArduino == MODO_EMERGENCIA:
-		print("Arduino EMERGENCIA")
-		globalesPiA.modo = MODO_EMERGENCIA
-		#pubMQTT("navegación/coordObj_geometría", json.dumps({"matar": "m"}))	
+		globalesPi.modo = MODO_EMERGENCIA
 		
-	if modoArduino != globalesPiA.modo:
-		print("In Vigial Cambdiando Modo de Arduino¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡")
-		print("Modo de PiA.....................................................",globalesPiA.modo)
-		comandoArduino(CAMBIAR_MODO, globalesPiA.modo)			
+	if modoArduino != globalesPi.modo:
+		comandoArduino(CAMBIAR_MODO, globalesPi.modo)	
 
         
-# Función para pruebas y depuración
-def testComandos():
+def testComandos(): # depuración
     
     while True:
            
@@ -311,15 +287,10 @@ def testComandos():
             
             comandoManual = comandoArduino(RECIBIR_COMANDO_MANUAL, "ar")
             print("comandoManual = ", comandoManual)
-            
-            #sleep(3)
-            
+                        
             comandoManual = comandoArduino(RECIBIR_COMANDO_MANUAL, "pp")
             print("comandoManual = " + str(comandoManual))
-            
-            #sleep(1)
-
-            
+                        
         
         print()
         print()
