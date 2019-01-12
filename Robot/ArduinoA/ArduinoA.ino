@@ -1,5 +1,5 @@
 // Depuración
-#define IMPRIMIR  false
+#define IMPRIMIR false
 #define IMPRIMIR_MAG false
 #define IMPRIMIR_SONARS false
 #define IMPRIMIR_MOTORES false
@@ -7,13 +7,11 @@
 
 // Comandos de RPi
 #include "headers/comandos.h"
-#define LONGITUD_MENSAJE 20
-char mensaje[LONGITUD_MENSAJE];
+char mensaje[20];
 int comando;
 
 // Modo de operación
 int modo = MODO_INACTIVO;// empezar en modo de parada
-//int modo = MODO_MANUAL;
 int *modoPuntero = &modo;
 int casoNavegacion = 0;
 int *casoNavegacionPuntero = &casoNavegacion;
@@ -33,10 +31,10 @@ Adafruit_LSM303 lsm;
 
 // Parámetros de movimiento
 int velocidad;
-#define VEL_LENTA 1400  
-#define VEL_NORMAL 1700 
-#define VEL_RAPIDA 2000 
-#define VEL_PORCENTAJE 0.2 
+#define VEL_LENTA 1000//1400  
+#define VEL_NORMAL 1300//1700 
+#define VEL_RAPIDA 1600//2000 
+#define VEL_PORCENTAJE 0.5 // for testing outside changed to 0.5 from 0.2 
 #define ACELERACION 1000
 
 int giro;
@@ -142,7 +140,6 @@ void setup()
 {
   // Inicializar los sensores y comunicaciones serie
   Serial.begin(115200);
-  
   lsm.begin();
   
   rc.begin(38400);
@@ -171,7 +168,8 @@ void loop()
   //COMUNICACIÓN CON PiA PARA NAVEGAR-------------------------------------------------------------------------------------------------------------------------
   erroresMotor();
 
-  //leerVelocidad();  
+  //leerVelocidad(); 
+   
   // Sonars
   leerSonars();
   delay(200); // esperar un poco para iniciar la comunicación serie sin errores
@@ -229,7 +227,7 @@ void loop()
   }
   else if (modo == MODO_INACTIVO)
   {
-    if (IMPRIMIR) Serial.println(F("Modo INACTIVO "));
+    if (IMPRIMIR) Serial.println(F("Modo INACTIVO"));
     parar();                                  // el robot siempre para
     llegada = 1;                              // el robot está listo para recibir comandos de dirección y distancia
     rc.ResetEncoders(DIRECCION_MEMORIA_RC);   // reseteo de los encoders
@@ -241,8 +239,8 @@ void loop()
   // Modo Navegacición------------------------------------------------------------------------------------------------
   else if (modo == MODO_NAVEGACION || modo == MODO_SONDEO)
   {
-   // Recibir dirección y distancia
-   if (comando == RECIBIR_DIRECCION_DISTANCIA_OBJ)
+    // Recibir dirección y distancia
+    if (comando == RECIBIR_DIRECCION_DISTANCIA_OBJ)
     {
       rc.ResetEncoders(DIRECCION_MEMORIA_RC);                             // resetear encoders
 
@@ -256,8 +254,6 @@ void loop()
       
       llegada = 0;                                                         // resetear llegada a 0 para no recibir nuevos comandos mientras el desplazamiento
     }
-
- 
 
     // Magnetómetro
     leerMagnetometro();                                                      
@@ -275,7 +271,17 @@ void loop()
     float distAdesplazar = distanciaObj - distanciaAct;
     if (IMPRIMIR) {Serial.print(F("distAdesplazar = "));  Serial.println(distAdesplazar);}
     
-    if (distAdesplazar <= 0.00 || (distanciaAct > 0.7&&distanciaAct <= 1.0))   // al desplazar la distancia necesaria, cambiar llegada a 1 para obtener nuevos comandos y para corregir su posición
+    if (distanciaAct > 0.3 && distanciaAct <= 0.7)   // al desplazar la distancia necesaria, cambiar llegada a 1 para obtener nuevos comandos y para corregir su posición
+    {
+      if (IMPRIMIR) Serial.println(F("-------------------------DESPLAZADO 1 m ------------------------------"));
+      llegada = 1;                   
+    }
+    if (distAdesplazar > 1.0 && distAdesplazar <= 1.3)   // al desplazar la distancia necesaria, cambiar llegada a 1 para obtener nuevos comandos y para corregir su posición
+    {
+      if (IMPRIMIR) Serial.println(F("-------------------------LLLEGADA EN 1 m ------------------------------"));
+      llegada = 1;                   
+    }   
+    if (distAdesplazar <= 0.00)   // al desplazar la distancia necesaria, cambiar llegada a 1 para obtener nuevos comandos y para corregir su posición
     {
       if (IMPRIMIR) Serial.println(F("-------------------------ARRIVED ------------------------------"));
       llegada = 1;             
@@ -305,7 +311,7 @@ void loop()
 float convertirAfloat(char mensaje[], int numDigitos, int comienzoMensaje)
 {
   int i;
-  char vector[LONGITUD_MENSAJE];   // crear un array con la longitúd del mensaje
+  char vector[20];   // crear un array con la longitúd del mensaje
 
   // En un bucle, añadir el mensaje en el array
   for (i = 0; i <= numDigitos; i++) 
