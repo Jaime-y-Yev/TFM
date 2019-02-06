@@ -1,5 +1,6 @@
 import pygame
 import pygame.camera
+import time
 
 pygame.init()
 pygame.camera.init()
@@ -28,3 +29,31 @@ def tomarFoto(lado):
 
 
 #tomarFoto('T')
+
+def tomarMuchasFotos(calidad, repeticiones):
+	for i in range(repeticiones):
+		tomarFoto(calidad + str(i))
+		time.sleep(0.5)
+
+#tomarMuchasFotos('Normal', 20)
+
+from os import listdir, fsencode, fsdecode
+import subprocess 
+
+
+def analizarMuchasFotos(carpeta):
+
+	carpetaBase = '/home/pi/TFM/Robot/PiB/Fotos/Calibración/'
+	directory = fsencode(carpetaBase + carpeta)
+
+	for file in listdir(directory):
+		filename = fsdecode(file)
+		#print('filename = ', filename)
+		
+		verdeI = subprocess.check_output('/home/pi/TFM/Robot/PiB/fotos ' + carpetaBase + carpeta + '/' + filename, shell=True)
+		verdeI = verdeI.decode("utf-8")
+		print(verdeI)
+		
+		time.sleep(0.5)
+
+#analizarMuchasFotos('Malas')

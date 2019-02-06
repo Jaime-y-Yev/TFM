@@ -46,25 +46,13 @@ def moverServo(pinServo, posicion):
 	print("Moviendo el servo ", servoUtilizado)
 
 	# Vigilar que el servo no sobrepasa sus límites
-	if (posicion < limiteMin or posicion > limiteMax):
-		if posicion < limiteMin:
-			if pinServo == pinServoAA:
-				globalesPi.ultimoPulsoAA = limiteMin
-			elif pinServo == pinServoID:
-				globalesPi.ultimoPulsoID = limiteMin
-		elif posicion > limiteMax:
-			if pinServo == pinServoAA:
-				globalesPi.ultimoPulsoAA = limiteMax
-			elif pinServo == pinServoID:
-				globalesPi.ultimoPulsoID = limiteMax
-			
+	if (posicion < limiteMin or posicion > limiteMax):		
 		print("La cámara esta en un extremo")
+		return
 		
-	else:
-		pi.set_servo_pulsewidth(pinServo, posicion)
+	pi.set_servo_pulsewidth(pinServo, posicion)
 
-resolucionGiro = 100
-tiempoEntreGiro = 0.0625
+
 
 def posicionInicial():
 	moverServo(pinServoID, pulsoCentroID)
@@ -84,26 +72,27 @@ def girarDerechaCentro():
 	moverServo(pinServoID, pulsoCentroID)
 	
 	
+		
 def moverServoWeb(key):
-    
+
+	if key not in [1,2,3,4]:
+		return
+
 	if key == 1 or key == 2:
-		
-		if key == 1:   
-			globalesPi.ultimoPulsoAA -= 20
-		elif key == 2:   
-			globalesPi.ultimoPulsoAA += 20
-		
-		moverServo(pinServoAA, globalesPi.ultimoPulsoAA)
-
+		pinServo = pinServoAA
 	elif key == 3 or key == 4:
+		pinServo = pinServoID	
 		
-		if key == 3:   
-			globalesPi.ultimoPulsoID += 20
-		elif key == 4:   
-			globalesPi.ultimoPulsoID -= 20
-		
-		moverServo(pinServoID, globalesPi.ultimoPulsoID)
+	if key == 1 or key == 4:   
+		incDec =-1
+	elif key == 2 or key == 3:   
+		incDec = 1
+	   
+	pos = pi.get_servo_pulsewidth(pinServo) + incDec*20 
 
+	moverServo(pinServo, pos)
+      
+	
 
 def testGiroCompleto(): 
 	girarCentroIzquierda()
@@ -114,4 +103,13 @@ def testGiroCompleto():
 
 #testGiroCompleto()
 
+def testServoWeb(): 
+
+	while True:
+		
+		key = int(input())
+		
+		moverServoWeb(key)
+
+#testServoWeb()
 

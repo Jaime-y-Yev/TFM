@@ -69,7 +69,7 @@ def hacerMediciones(coordObj=None,sustancia=None):
 
 	medicionesDict = {"coordObj": coordObj, "Temperatura": temperatura, "Humedad": humedad, "EC": ec, "Salinidad": salinidad, "SDT": sdt, "Epsilon": epsilon}
 
-	#guardarMed("CompilacionDatos",medicionesDict,sustancia) # Opcional, si quiero guardar las medidas
+	guardarMed("CompilacionDatosTurba2",medicionesDict,sustancia) # Opcional, si quiero guardar las medidas
 	
 	sleep(3)
 	
@@ -82,4 +82,5 @@ def compilarDatos(cantidad,sustancia):
 	for i in range(cantidad):
 		hacerMediciones(sustancia=sustancia)
 		sleep(1)
-#compilarDatos(100,"turba") # 230ml of water. note last two measurements are 6.5 and 8g salt. also remove last 3 measurements from turba
+
+#compilarDatos(100,"turba") 

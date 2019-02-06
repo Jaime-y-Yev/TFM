@@ -34,6 +34,7 @@ def sondear(coordObj):
 		globalesPi.expandirActuador = False
 		globalesPi.contraerActuador = True
 		return		
+		
 	# Si no surge un problema de expansión, el sensor hace mediciones
 	medicionesDict = sensor.hacerMediciones(coordObj)
 	medicionesDict["idSesión"] = globalesPi.idSesion

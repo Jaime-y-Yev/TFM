@@ -11,8 +11,8 @@ servoPWM = GPIO.PWM(servoPin, 50)
 servoPWM.start(0)
 
 # Angulos que el servo tiene que girar para desplazar la jaula
-angleIn = 20 #45 
-angleOut = 100 #95 
+angleIn = 20 
+angleOut = 100  
 
 def setAngle(angle):
     duty = angle/18 + 2
@@ -72,9 +72,10 @@ def testJaula():
 
 #testJaula()
 
-# with servo decoupled, set angle to 90
+# Para acoplar el servo en la posición correcta:
+# con el servo desacoplado, girar a 90 grados
 #setAngle(90)
-# pull cage back as much as possible
-# couple servo
-# 45 should move forward, 95 should move back
+# Tirar de jaula hacia atrás lo más posible
+# Acoplar servo
+# 20 debería retraer, y 100 revelar
 

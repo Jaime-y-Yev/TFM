@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 
 	float vari = 0.0;
 	
-	int numPixelesTotal = 0;
-	int numPixelesBuenos = 0;
+	float numPixelesTotal = 0.0;
+	float numPixelesBuenos = 0.0;
 
     // Recorrer las filas de la imagen
     for (int i = 0, biHeight = abs(bi.biHeight); i < biHeight; i++)
@@ -63,34 +63,41 @@ int main(int argc, char *argv[])
             fread(&triple, sizeof(RGBTRIPLE), 1, inptr);
             
 			// Calcular el numerador y el denominador del VARI para este pixel
-			int numerador = triple.rgbtGreen - triple.rgbtRed;
-			int denominador = triple.rgbtGreen + triple.rgbtRed - triple.rgbtBlue;
+			float numerador = triple.rgbtGreen - triple.rgbtRed;
+			float denominador = triple.rgbtGreen + triple.rgbtRed - triple.rgbtBlue;
 			
 			// Para evitar la excepción al dividir por 0	
 			if (denominador == 0)
 				denominador++;
             	
-			vari = numerador/denominador;	
+			vari = numerador/denominador;
+			
+			//printf("%f \n", vari);
 
 			// Considerar que un pixel es bueno si tiene suficiente VARI
-			if (vari >= 0.6) 
+			if (vari >= 0.6) {
+				//printf("buen pixel \n");
 				numPixelesBuenos++;			 	
-
+			}
+			
             numPixelesTotal++;
         }
 
         // Ignorar el colchón
         fseek(inptr, padding, SEEK_CUR);
     }
+    
+    //printf("%f \n", numPixelesBuenos);
+	//printf("%f \n", numPixelesTotal);
 
-	int porcentajeVerde = numPixelesBuenos / numPixelesTotal * 100;
-	printf("%i", porcentajeVerde);
+	float porcentajeVerde = numPixelesBuenos / numPixelesTotal;
+	//printf("%.10f \n", porcentajeVerde);
+
+	porcentajeVerde = porcentajeVerde*100;
+	printf("%.4f", porcentajeVerde);
 
     // Cerrar la imagen
     fclose(inptr);
 
     return 0;
 }
-
-// 2019-01-05_16:11:57.405537_T.bmp gives 42 97 50
-// determine plant health by rgb

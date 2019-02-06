@@ -185,12 +185,13 @@ class Hilo(threading.Thread):
 						verdesDict, fotoI, fotoD = camara.tomarFotos()
 
 						# Añadir los resultados de las fotos a los resultados de sondeo
-						medicionesDict = {**resultadosSondeoDict, **verdesDict}
+						resultadosSondeoDict.update(verdesDict)
+
 
 						# Mandar los resultados al servidor
 						globalesPi.estadoPiB = "Mandando resultados al servidor"
 						print("Mandando resultados al servidor: ", resultadosSondeoDict)
-						pubMQTT('RobotServidor/resultados/medidas', json.dumps(medicionesDict))
+						pubMQTT('RobotServidor/resultados/medidas', json.dumps(resultadosSondeoDict))
 						sleep(1)
 
 						pubMQTT('RobotServidor/resultados/fotos/I', fotoI)
