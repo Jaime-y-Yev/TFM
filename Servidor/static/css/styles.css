@@ -60,7 +60,7 @@ main img
 
 .container-p-5{
     position: relative;
-    left: -230px;
+    left: -300px;
     top: 30px;
     align-items: left;
     justify-content: left;
@@ -68,7 +68,7 @@ main img
 
 .container-p-6{
     position: relative;
-    left: 230px;
+    left: 150px;
     top: -170px;
     align-items: right;
     justify-content: right;
@@ -76,10 +76,18 @@ main img
 
 .container-p-7{
     position: relative;
-    left: 400px;
-    top: 0;
+    left: 200px;
+    top: -200px;
     align-items: right;
     justify-content: right;
+}
+
+.container-p-8{
+  position: relative;
+  left: 550px;
+  top: -170px;
+  align-items: right;
+  justify-content: right;
 }
 
 .row{
@@ -108,8 +116,8 @@ main img
     text-align: center;
     background-color: #fff;
     height: 40px;
-    -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2);
-    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+    /* -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2); */
+    /* box-shadow: 0 1px 1px 0 rgba(0,0,0,.1); */
     margin-bottom: 10px;
     position: relative;
   }
@@ -120,8 +128,8 @@ main img
   text-align: left;
   background-color: #fff;
   height: 40px;
-  -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2);
-  box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+  /* -webkit-box-shadow: 0 1px 1px 0 rgba(0,0,0,.2); */
+  /* box-shadow: 0 1px 1px 0 rgba(0,0,0,.1); */
   margin-bottom: 10px;
   position: relative;
 }
@@ -145,6 +153,7 @@ main img
   position:relative;
   top: calc(50% - 9px)!important; /* 50% - 3/4 of icon height */
 }
+
 .update-nag > .update-split.update-success{
   background: #5cb85c!important;
 }
@@ -154,13 +163,13 @@ main img
 }
 
 .update-nag > .update-split.update-info{
-  background: #5bc0de!important;
+  background: #fff!important;
 }
 
 
 
 .update-nag > .update-text{
-  line-height: 19px;
+  line-height: 0px;
   padding-top: 11px;
   padding-left: 45px;
   padding-right: 20px;
@@ -266,3 +275,4 @@ main img
   from {opacity: 1} 
   to {opacity: 1}
 }
+
