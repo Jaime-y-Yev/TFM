@@ -45,7 +45,6 @@ void setup()
   irrecv.enableIRIn();        // arrancar el IR
   irrecv.blink13(true);       // parpadear LED_BUILTIN al recibir un valor IR (ayuda a depurar)
 
-/*
   // Interrupcion
   pinMode(PIN_INTERRUPCION_DESCONECT, INPUT_PULLUP); 
   pinMode(PIN_INTERRUPCION_CONECT, INPUT_PULLUP);
@@ -53,10 +52,10 @@ void setup()
   digitalWrite(PIN_INTERRUPCION_CONECT, LOW); // Habilitar el pullup en el pin digital 3
   attachInterrupt(digitalPinToInterrupt(PIN_INTERRUPCION_DESCONECT), desconectarBateria, RISING);
   attachInterrupt(digitalPinToInterrupt(PIN_INTERRUPCION_CONECT), conectarBateria, RISING);
-  */
+  
   // Relé
-  pinMode(RELE, OUTPUT);      // el Arduino envía una señal de trigger al relé
-  digitalWrite(RELE, HIGH);    // asegurarse de empezar con la batería desconectada
+  pinMode(RELE, OUTPUT);        // el Arduino envía una señal de trigger al relé
+  digitalWrite(RELE, HIGH);     // asegurarse de empezar con la batería desconectada
 
   DHT.read11(PIN_DHT11);
   temperatura = DHT.temperature;
@@ -66,10 +65,7 @@ void setup()
 
 // Conectar o desconectar la batería según el comando IR que llegue
 void loop()
-{
-  //digitalWrite(RELE, HIGH);    // asegurarse de empezar con la batería desconectada
-
-  
+{ 
   // Recibir mensajes de PiA, decodificarlos, y hacer una conversión a forma útil----------------------------------
   if (Serial.available())
   {
