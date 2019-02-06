@@ -139,23 +139,23 @@ void erroresMotor(void)
   uint16_t estado = rc.ReadError(DIRECCION_MEMORIA_RC, &valid);
   _Bool error = false;
 
-  //if (!(estado & 0x0000)) Serial.println(F("RC Normal"));
-//  if (estado & 0x0001) {Serial.println(F("RC Error: Sobrecorriente M1")); error = true;} 
-//  if (estado & 0x0002) {Serial.println(F("RC Error: Sobrecorriente M2")); error = true;} 
-//  if (estado & 0x0004) {Serial.println(F("RC Error: E-stop")); error = true;} 
-//  if (estado & 0x0008) {Serial.println(F("RC Error: temperatura")); error = true;} 
-//  if (estado & 0x0010) {Serial.println(F("RC Error: temperatura 2")); error = true;} 
-//  if (estado & 0x0020) {Serial.println(F("RC Error: Batería principal alta")); error = true;} 
-//  if (estado & 0x0040) {Serial.println(F("RC Error: Batería lógica alta")); error = true;} 
-//  if (estado & 0x0080) {Serial.println(F("RC Error: Batería lógica baja")); error = true;} 
-//  if (estado & 0x0100) {Serial.println(F("RC Error: M1 driver")); error = true;} 
-//  if (estado & 0x0200) {Serial.println(F("RC Error: M2 driver")); error = true;} 
-//  if (estado & 0x0400) {Serial.println(F("RC Aviso: Batería principal alta")); error = true;} 
-//  if (estado & 0x0800) {Serial.println(F("RC Aviso: Batería principal baja")); error = true;} 
-//  if (estado & 0x1000) {Serial.println(F("RC Aviso: temperatura M1")); error = true;} 
-//  if (estado & 0x2000) {Serial.println(F("RC Aviso: temperatura M2")); error = true;} 
-  //if (estado & 0x4000) Serial.println(F("RC M1 Home")); 
-  //if (estado & 0x8000) Serial.println(F("RC M2 Home"));
+  if (!(estado & 0x0000)) Serial.println(F("RC Normal"));
+  if (estado & 0x0001) {Serial.println(F("RC Error: Sobrecorriente M1")); error = true;} 
+  if (estado & 0x0002) {Serial.println(F("RC Error: Sobrecorriente M2")); error = true;} 
+  if (estado & 0x0004) {Serial.println(F("RC Error: E-stop")); error = true;} 
+  if (estado & 0x0008) {Serial.println(F("RC Error: temperatura")); error = true;} 
+  if (estado & 0x0010) {Serial.println(F("RC Error: temperatura 2")); error = true;} 
+  if (estado & 0x0020) {Serial.println(F("RC Error: Batería principal alta")); error = true;} 
+  if (estado & 0x0040) {Serial.println(F("RC Error: Batería lógica alta")); error = true;} 
+  if (estado & 0x0080) {Serial.println(F("RC Error: Batería lógica baja")); error = true;} 
+  if (estado & 0x0100) {Serial.println(F("RC Error: M1 driver")); error = true;} 
+  if (estado & 0x0200) {Serial.println(F("RC Error: M2 driver")); error = true;} 
+  if (estado & 0x0400) {Serial.println(F("RC Aviso: Batería principal alta")); error = true;} 
+  if (estado & 0x0800) {Serial.println(F("RC Aviso: Batería principal baja")); error = true;} 
+  if (estado & 0x1000) {Serial.println(F("RC Aviso: temperatura M1")); error = true;} 
+  if (estado & 0x2000) {Serial.println(F("RC Aviso: temperatura M2")); error = true;} 
+  if (estado & 0x4000) Serial.println(F("RC M1 Home")); 
+  if (estado & 0x8000) Serial.println(F("RC M2 Home"));
 
   if (error) 
   {
