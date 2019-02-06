@@ -46,15 +46,15 @@ archivoArduinoA = '/home/pi/TFM/Robot/ArduinoA/headers/comandos.h'
 archivoArduinoB = '/home/pi/TFM/Robot/ArduinoB/headers/comandos.h'
 
 #actualizarEncabezamientoArduino(archivoPi,archivoArduinoA)
-actualizarEncabezamientoArduino(archivoPi,archivoArduinoB)
+#actualizarEncabezamientoArduino(archivoPi,archivoArduinoB)
 
 
 import subprocess
 from time import sleep
 
 
-def compilarSubirArduino():
-	"""Compilar y subir el Arduino"""
+def compilarArduino():
+	"""Compilar el Arduino"""
 	
 	# Seguir intentando hasta compilar el Arduino exitosamente 
 	resultadoCompilacion = ""
@@ -73,7 +73,12 @@ def compilarSubirArduino():
 		else:
 			print("Problema al intentar compilar, reintentando...")
 
+	sleep(2)
+	
 
+def subirArduino():
+	"""Subir el Arduino"""
+	
 	# Seguir intentando hasta subir el Arduino exitosamente 
 	resultadoSubida = "blahblah"
 	while resultadoSubida != "":
@@ -90,6 +95,7 @@ def compilarSubirArduino():
 		else:
 			print("Problema al intentar subir, reintentando...")
 	
-	sleep(2)
+	sleep(2)	
 
-#compilarSubirArduino()
+#compilarArduino()
+#subirArduino()

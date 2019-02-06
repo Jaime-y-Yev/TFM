@@ -22,7 +22,7 @@ def pubMQTT(topic, mensaje,retainMess=False):
 	pub = mqtt.Client()                           
 	pub.connect(broker_address, broker_port, broker_timeout)         
 	pub.loop_start()                                    
-	print("--->--->--->--->--->--->--->--->--->--->--->---> Pi pub al topic ", topic, " el mensaje ", mensaje)
+	print("--->--->--->--->--->--->--->--->--->---> Pi pub al ", topic, ": ", mensaje)
 
 	if topic == "RobotServidor/resultados/fotos/I" or topic == "RobotServidor/resultados/fotos/D":
 		f = open(mensaje, 'rb')
@@ -43,16 +43,17 @@ def subMQTT(topics):
 	"""Se subscribe a mensajes mediante MQTT""" 
 
 	def on_connect(client, userdata, flags, rc):  # notificar que se ha conectado al topic        
-		print("Sub MQTT conectado al topic " + str(topics))
+		print("<---<---<---<---<---<---<---<---<---<---< Sub MQTT conectado al topic " + str(topics))
 		sub.subscribe(topics)
 
 	def on_message(client, userdata, message):    # dependiendo del topic, procesar el mensaje de forma distinta 
 
 		mensaje = message.payload.decode("utf-8") 
-		print("<---<---<---<---<---<---<---<---<---<---<---<--- Pi sub en topic ",message.topic ," el mensaje ", mensaje)
+		print("<---<---<---<---<---<---<---<---<---<---< Pi sub en ",message.topic ,": ", mensaje)
 
 		if mensaje == '{"matar": "m"}':
 			sub.disconnect()
+			return
 
 		if message.topic == "ServidorRobot/modoA":		# cambia el modo de PiA
 
@@ -68,7 +69,7 @@ def subMQTT(topics):
 				globalesPi.modo = int(mensaje)
 		
 		if message.topic == "ServidorRobot/marchaParo":		# señal de marcha o paro que inicia o detiene la navegación
-			globalesPi.marchaOparo = int(mensaje)
+			globalesPi.marchaParo = int(mensaje)
 
 		if message.topic == "ServidorRobot/antena":			# cambia la antena utilizada en la navegación (RTKlib o móvil)
 			globalesPi.antena = int(mensaje)
