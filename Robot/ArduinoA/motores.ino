@@ -65,7 +65,7 @@ void parar(void)                                   // Parar los motores
   rc.SpeedAccelM2(DIRECCION_MEMORIA_RC, 2000, 0); 
 }
 
-void pararadaSuave(void)                                   // Parar los motores
+void paradaSuave(void)                                   // Parar los motores
 {
   if (IMPRIMIR_MOTORES) Serial.println(F("Parando"));
   rc.SpeedAccelM1(DIRECCION_MEMORIA_RC, ACELERACION, 0);

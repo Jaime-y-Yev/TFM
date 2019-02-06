@@ -1,13 +1,12 @@
 void navegacionManual(char mensaje[])
 {
-  String respuesta = 'X' + String(mensaje[2]) + String(mensaje[3]) + 'x'; 
-  Serial.println(respuesta);
+  Serial.print(String(mensaje[2]) + String(mensaje[3]));
   Serial.flush();
   
   int velocidad = VEL_LENTA; 
     
   if (mensaje[2] == 'p' && mensaje[3] == 'f') parar();  
-  else if (mensaje[2] == 'p' && mensaje[3] == 's') pararadaSuave();  
+  else if (mensaje[2] == 'p' && mensaje[3] == 's') paradaSuave();  
   else if (mensaje[2] == 'a' && mensaje[3] == 'r') avanzarRecto(velocidad); 
   else if (mensaje[2] == 'a' && mensaje[3] == 'i') avanzarIzquierda(velocidad);
   else if (mensaje[2] == 'a' && mensaje[3] == 'd') avanzarDerecha(velocidad);

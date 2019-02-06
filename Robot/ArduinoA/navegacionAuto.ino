@@ -44,7 +44,7 @@ void navegacionAutomatica(int giro, float distAdesplazar, int *modoPuntero, int 
         *casoNavegacionPuntero = 6;             
       }
       // Caso E: Navegación hacia objetivo con un obstaculo no muy lejano
-      else if (DISTANCIA_CORTA < distanciaSonarFI && DISTANCIA_CORTA < distanciaSonarFD)
+      else if (DISTANCIA_MEDIA < distanciaSonarFI && DISTANCIA_MEDIA < distanciaSonarFD)
       {
         obstaculoAdistanciaMedia(giro, distAdesplazar); 
         *despPuntero = DESP_POSITIVO;
@@ -52,16 +52,16 @@ void navegacionAutomatica(int giro, float distAdesplazar, int *modoPuntero, int 
       }
       /* Casos donde hay un obstáculo cerca. Aquí empieza evitación de obstáculos */
       // Caso D: SÍ hay suficiente espacio para desviarse y evitar el obstáculo en frente del robot
-      else if (DISTANCIA_OBSTACULO < distanciaSonarFI && distanciaSonarFI <= DISTANCIA_CORTA ||
-               DISTANCIA_OBSTACULO < distanciaSonarFD && distanciaSonarFD <= DISTANCIA_CORTA)
+      else if (DISTANCIA_CORTA < distanciaSonarFI && distanciaSonarFI <= DISTANCIA_MEDIA ||
+               DISTANCIA_CORTA < distanciaSonarFD && distanciaSonarFD <= DISTANCIA_MEDIA)
       {
         obstaculoAdistanciaPequena(giro);     
         *despPuntero = DESP_POSITIVO;
         *casoNavegacionPuntero = 4;             
       }
       // Caso C: NO hay suficiente espacio para desviarse y evitar el obstáculo en frente del robot, retroceder para volver a un caso anterior
-      else if (DISTANCIA_PARADA < distanciaSonarFI && distanciaSonarFI <= DISTANCIA_OBSTACULO ||
-               DISTANCIA_PARADA < distanciaSonarFD && distanciaSonarFD <= DISTANCIA_OBSTACULO)  
+      else if (DISTANCIA_PARADA < distanciaSonarFI && distanciaSonarFI <= DISTANCIA_CORTA ||
+               DISTANCIA_PARADA < distanciaSonarFD && distanciaSonarFD <= DISTANCIA_CORTA)  
                
       {
         if (DISTANCIA_PARADA >= distanciaSonarA)
@@ -92,9 +92,9 @@ void navegacionAutomatica(int giro, float distAdesplazar, int *modoPuntero, int 
        *despPuntero = DESP_POSITIVO;
   
        int velocidad;    
-       if (distAdesplazar > DISTANCIA_CORTA)                      // Si hay mucha distancia entre nuestro punto objetivo y el robot
+       if (distAdesplazar > DISTANCIA_MEDIA)                      // Si hay mucha distancia entre nuestro punto objetivo y el robot
          velocidad = VEL_NORMAL;
-       else if (distAdesplazar <= DISTANCIA_CORTA)                  // Si el robot casi está en su punto objetivo
+       else if (distAdesplazar <= DISTANCIA_MEDIA)                  // Si el robot casi está en su punto objetivo
          velocidad = VEL_LENTA;
       
        giro = direccionEntreFilas(distanciaSonarI1,distanciaSonarD1);
@@ -161,12 +161,12 @@ void obstaculoAdistanciaGrande(int giro, float distAdesplazar)
   if (IMPRIMIR_NAV) Serial.print(F("Desplazamiento positivo, "));
 
   int velocidad;
-  if (distAdesplazar >= DISTANCIA_CORTA)                          // punto objetivo no está cerca todavía
+  if (distAdesplazar >= DISTANCIA_MEDIA)                          // punto objetivo no está cerca todavía
   {
     velocidad = VEL_RAPIDA;                   
     if (IMPRIMIR_NAV) Serial.println(F("velocidad rápida"));    
   }
-  else if (distAdesplazar < DISTANCIA_CORTA)                      // punto objetivo está cerca
+  else if (distAdesplazar < DISTANCIA_MEDIA)                      // punto objetivo está cerca
   {
     velocidad = VEL_LENTA;                     
     if (IMPRIMIR_NAV) Serial.println(F("velocidad lenta"));   
@@ -185,14 +185,14 @@ void obstaculoAdistanciaMedia(int giro, float distAdesplazar)
   if (IMPRIMIR_NAV) Serial.print(F("Desplazamiento positivo, "));
 
   int velocidad;
-  if (distAdesplazar >= DISTANCIA_CORTA)                          // punto objetivo no está cerca todavía
+  if (distAdesplazar >= DISTANCIA_MEDIA)                          // punto objetivo no está cerca todavía
   {
     velocidad = VEL_NORMAL; 
     //velocidad = VEL_LENTA;    
     if (IMPRIMIR_NAV) Serial.println(F("Velocidad normal(lenta debug)"));
   
   }
-  else if (distAdesplazar < DISTANCIA_CORTA)                      // punto objetivo está cerca
+  else if (distAdesplazar < DISTANCIA_MEDIA)                      // punto objetivo está cerca
   {          
     velocidad = VEL_LENTA;
     if (IMPRIMIR_NAV) Serial.println(F("Velocidad lenta"));   
@@ -315,8 +315,8 @@ void obstaculoAdistanciaPequena(int giro)
       leerMagnetometro();          // obtener datos de magnetometro
       if (IMPRIMIR_NAV)  {Serial.print(F("direccionAct: ")); Serial.println(direccionAct);}
 
-      if (DISTANCIA_OBSTACULO < distanciaSonarFI && distanciaSonarFI < DISTANCIA_CORTA ||
-          DISTANCIA_OBSTACULO < distanciaSonarFD && distanciaSonarFD < DISTANCIA_CORTA)
+      if (DISTANCIA_CORTA < distanciaSonarFI && distanciaSonarFI < DISTANCIA_MEDIA ||
+          DISTANCIA_CORTA < distanciaSonarFD && distanciaSonarFD < DISTANCIA_MEDIA)
       {
         giroCompleto = false;
       }
@@ -326,8 +326,8 @@ void obstaculoAdistanciaPequena(int giro)
       {
         if (IMPRIMIR_NAV)  Serial.println(F("Parte 1: orientando para estar paralelo con obstáculo ----------------------------------------------------------------------------------"));
                 
-        if (DISTANCIA_OBSTACULO < distanciaSonarFI && distanciaSonarFI < DISTANCIA_CORTA ||
-            DISTANCIA_OBSTACULO < distanciaSonarFD && distanciaSonarFD < DISTANCIA_CORTA)
+        if (DISTANCIA_CORTA < distanciaSonarFI && distanciaSonarFI < DISTANCIA_MEDIA ||
+            DISTANCIA_CORTA < distanciaSonarFD && distanciaSonarFD < DISTANCIA_MEDIA)
         {
           velocidad = VEL_LENTA;
           *despPuntero = DESP_GIRO;
@@ -337,7 +337,7 @@ void obstaculoAdistanciaPequena(int giro)
           
           giroCompleto = false;
         }
-        else if ((distanciaSonarFI > DISTANCIA_CORTA && distanciaSonarFD > DISTANCIA_CORTA) && giroCompleto == false) 
+        else if ((distanciaSonarFI > DISTANCIA_MEDIA && distanciaSonarFD > DISTANCIA_MEDIA) && giroCompleto == false) 
         {
           parar();
           if (IMPRIMIR_NAV) Serial.println(F("PARADO POR 2 Seg"));
