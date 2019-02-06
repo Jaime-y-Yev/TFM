@@ -58,33 +58,37 @@ def direccion(coordAct, coordObj):
     # Se convierte el valor en grados para poder utilizarlo en ArduinoA
     h = math.degrees(h) 
     direccionObj = (h + 360) % 360 # para obtener el valor entre 0 y 360 grados
-    return direccionObj
+    return int(direccionObj)
 
 # Se calcula la distancia entre coordAct y coordObj teniendo en cuenta que el planeta es redonda
 def distancia(coordAct, coordObj):
     
-    # Se descompone las coordenadas para obtener valores individuales
-    latObj =float(coordObj[0])
-    lonObj =float(coordObj[1])
-    latAct =float(coordAct[0])
-    lonAct =float(coordAct[1])
-    
-    radio = 6371 # km
-    
-    # Se halla la diferencia entre valores lat y lon en radianes
-    dlat = math.radians(latObj-latAct)
-    dlon = math.radians(lonObj-lonAct)
-    
-    # Se utiliza una ecuación para have la conversión a distancia
-    a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(latAct)) \
-        * math.cos(math.radians(latObj)) * math.sin(dlon/2) * math.sin(dlon/2)
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    d = radio * c # tenemos en cuenta el radio del planeta
-    
-    # distanciaObj = d km para simulación sin GPS
-    distanciaObj = d *1000  #en metros
+	# Se descompone las coordenadas para obtener valores individuales
+	try:
+		latObj =float(coordObj[0])
+	except:
+		return 0.0
 
-    return distanciaObj
+	lonObj =float(coordObj[1])
+	latAct =float(coordAct[0])
+	lonAct =float(coordAct[1])
+
+	radio = 6371 # km
+
+	# Se halla la diferencia entre valores lat y lon en radianes
+	dlat = math.radians(latObj-latAct)
+	dlon = math.radians(lonObj-lonAct)
+
+	# Se utiliza una ecuación para have la conversión a distancia
+	a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(math.radians(latAct)) \
+		* math.cos(math.radians(latObj)) * math.sin(dlon/2) * math.sin(dlon/2)
+	c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+	d = radio * c # tenemos en cuenta el radio del planeta
+
+	# distanciaObj = d km para simulación sin GPS
+	distanciaObj = d *1000  #en metros
+	distanciaObj = round(distanciaObj,2)
+	return distanciaObj
     
 # Se calcula el promedio de la lista de coordAct recibidos del móvil
 def promedio(coordActCandidatos):
@@ -107,7 +111,7 @@ def promedio(coordActCandidatos):
 	return coordAct
 
 # Se inicializa la tolerancia de distancia (ej. llegar a 0.8m del objetivo signifíca llegar exitosamente)
-distanciaTol = 0.8 # 
+distanciaTol = 1.5 # 
 
 # La función principal de navegción autonoma que manda comandos de distancia y dirección al ArduinoA
 def navegar(trayectoria, coordObj):
@@ -130,15 +134,12 @@ def navegar(trayectoria, coordObj):
 	coordObj = globalesPi.coordAct  # guardar el valor actual de coordAct en una copia de coordObj local para empezar el proceso de navegación maś tarde
 
 	# SIMULACIÓN---------------------------------------------------------
-
 	simulación = 2   
 	if simulación == 1:          # Simulación de navegar() sólo
 		lasttime = clock() 
 		j = 0                    
-
-	if simulación == 2:
+	elif simulación == 2:
 		j = 0                    # Simulación ArduinoA y navegar()
-		
 	# -------------------------------------------------------------------
 	while True:
 		
@@ -169,107 +170,90 @@ def navegar(trayectoria, coordObj):
 			print("..............................................................................................................................................en navegar()..")
 			
 			# Simulación ---------------------------------------------------- 
-			
 			if simulación == 1:
-				llegadaArduino = 1
 				if clock()-lasttime > 5 and j< len(trayectoria): 
 					coordAct = trayectoria[j]                           
 					globalesPi.coordAct = trayectoria[j] 
 					j += 1 
 					lasttime = clock()
-			if simulación == 2:
-				llegadaArduino, casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
-			
+			elif simulación == 2:
+				casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
+				coordAct = trayectoria[j] 
+				globalesPi.coordAct = trayectoria[j]
 			# --------------------------------------------------------------- 				
 			
-			# Se confirma que el Arduino está listo para navegar o si el Arduino ha desplazado la distancia correcta para recibir un nuevo objetivo
+			# Para calibrar magnetómetro y depurar casos de navegación del Arduino
 			if simulación == 0:				
-				# Obtener estatus del ArduinoA, su propio caso de navegación, y su dirección actual
-				llegadaArduino, casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
+				casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
 				
 				print("---------------------------------------------------------------------------------------------------------")
-				print("«----------llegada Arduino: ", llegadaArduino)
-				print("«----------casoNavegacion Arduino: ", casoNavegacion)
-				print("«----------direccionAct Arduino: ", direccionAct)
+				print("!!!!!«----------casoNavegacion Arduino: ", casoNavegacion)
+				print("«!!!!!----------direccionAct Arduino: ", direccionAct)
 				print("---------------------------------------------------------------------------------------------------------")
 			
-			# Sólo ejecutar los próximos pasos si el Arduino está listo para recibir los comandos
-			if llegadaArduino == 1:                                                     
-				# Simulación ArduinoA y navegar()---------------------------------- 
-				
-				if simulación == 2:
-					coordAct = trayectoria[j] 
-					globalesPi.coordAct = trayectoria[j]
-				
-				# -----------------------------------------------------------------
-				
-				# Primero: aseguramos que ya no estamos en nuestro coordObj final
-				últimoPuntoTrayectoria =  trayectoria[len(trayectoria)-1]
-				distanciaObj = distancia(coordAct, últimoPuntoTrayectoria)  # antes de iniciar el cálculo, asegurarse de no haber llegado ya al objetivo (ej. si ha ocurrido un reset durante la navegación)          
-				print("distanciaObj a ULTIMO PUNTO: "+ str(distanciaObj))     
+			
+			# Primero: aseguramos que ya no estamos en nuestro coordObj final
+			últimoPuntoTrayectoria =  trayectoria[len(trayectoria)-1]
+			distanciaObj = distancia(coordAct, últimoPuntoTrayectoria)  # antes de iniciar el cálculo, asegurarse de no haber llegado ya al objetivo (ej. si ha ocurrido un reset durante la navegación)          
+			print("distanciaObj a ULTIMO PUNTO: "+ str(distanciaObj))     
 
-				if distanciaObj <= distanciaTol:  							# comprobar si el robot ha llegado al ÚLTIMO punto de trayectoria                  
-					globalesPi.estadoPiA = "Navegación finalizada"          # informar el usuario sobre la llegada finalizada
-					globalesPi.estadoArduinoA = "Navegación finalizada"
-					print("---------------------------------------------------------------------------------------------------------")
-					print("-----------------------------------------Navegación finalizada-------------------------------------------")
-					print("---------------------------------------------------------------------------------------------------------")
+			if distanciaObj <= distanciaTol:  							# comprobar si el robot ha llegado al ÚLTIMO punto de trayectoria                  
+				globalesPi.estadoPiA = "Navegación finalizada"          # informar el usuario sobre la llegada finalizada
+				globalesPi.estadoArduinoA = "Navegación finalizada"
+				print("---------------------------------------------------------------------------------------------------------")
+				print("-----------------------------------------Navegación finalizada-------------------------------------------")
+				print("---------------------------------------------------------------------------------------------------------")
 
-					# Cambiar el modo de Arduino a inactivo después de la llegada exitosa
-					comandoArduino(CAMBIAR_MODO, MODO_INACTIVO)
+				# Cambiar el modo de Arduino a inactivo después de la llegada exitosa
+				comandoArduino(CAMBIAR_MODO, MODO_INACTIVO)
+				break
+			
+			# Segundo: si no estámos en nuestro coordObj final empezamos la navegación a ith punto de la trayectoria
+			elif distanciaObj > distanciaTol:
+										
+				# Se recalcula la distancia entre coordAct y coordObj pero este vez coordObj no es el punto final de la trayectoria, sino la siguinete punto
+				distanciaObj = distancia(coordAct, coordObj)         # la primera vez, coordAct=coordObj => SIEMPRE cumple este condición. Sirve para iniciar el bucle
+				
+				# Asigna el proximo punto de la trayectoria a nuestro coordObj se hemos llegado al punto previo
+				if distanciaObj <= distanciaTol: 
+					llegada, coordObj = siguientePunto(trayectoria)  # al llegar al último punto de trayectoria, llegada=1. En otros casos, llegada=0
+									
+				# Si pasa cuando la distancia entre final punto objetivo y actual todavía es > distancia Tol -> avería
+				if llegada == 1:
+					globalesPi.estadoPiA = "Error en navegación, cambiando a MODO_EMERGENCIA..."
+					globalesPi.modo = MODO_EMERGENCIA
 					break
 				
-				# Segundo: si no estámos en nuestro coordObj final empezamos la navegación a ith punto de la trayectoria
-				elif distanciaObj > distanciaTol:
+				# Casi siempre estamos en este caso. No cogemos siguiente punto de trayectoria. Recalculamos distancia y dirección
+				elif llegada == 0:     
 											
-					# Se recalcula la distancia entre coordAct y coordObj pero este vez coordObj no es el punto final de la trayectoria, sino la siguinete punto
-					distanciaObj = distancia(coordAct, coordObj)         # la primera vez, coordAct=coordObj => SIEMPRE cumple este condición. Sirve para iniciar el bucle
+					# Se llama las funciones que calculan dirección y distancia entre le punto corriente y el próximo punto via de la trayectoria
+					direccionObj = direccion(coordAct, coordObj)
+					globalesPi.direccionObjUltima = direccionObj
+					distanciaObj = distancia(coordAct, coordObj)
 					
-					# Asigna el proximo punto de la trayectoria a nuestro coordObj se hemos llegado al punto previo
-					if distanciaObj <= distanciaTol: 
-						llegada, coordObj = siguientePunto(trayectoria)  # al llegar al último punto de trayectoria, llegada=1. En otros casos, llegada=0
-										
-					# Si pasa cuando la distancia entre final punto objetivo y actual todavía es > distancia Tol -> avería
-					if llegada == 1:
-						globalesPi.estadoPiA = "Error en navegación, cambiando a MODO_EMERGENCIA..."
-						globalesPi.modo = MODO_EMERGENCIA
-						break
+					globalesPi.estadoArduinoA = "ArduinoA navegando..." # informar el usuario sobre el estado de ArduinoA
+						
+					# Se manda la direccionObj y distanciaObj al ArduinoA               
+					direcciónObj = comandoArduino(RECIBIR_DIRECCION_OBJ, direccionObj)
+					distanciaObj = comandoArduino(RECIBIR_DISTANCIA_OBJ, distanciaObj)
 					
-					# Casi siempre estamos en este caso. No cogemos siguiente punto de trayectoria. Recalculamos distancia y dirección
-					elif llegada == 0:     
-												
-						# Se llama las funciones que calculan dirección y distancia entre le punto corriente y el próximo punto via de la trayectoria
-						direccionObj = direccion(coordAct, coordObj)
-						globalesPi.direccionObjUltima = direccionObj
-						distanciaObj = distancia(coordAct, coordObj)
-						print("---------------------------------------------------------------------------------------------------------------------------------")
-						print( "----------»Mandamos al ArduinoA direccionObj: "+ str(direccionObj)) # informar el usuario sobre la manda de dirección y distancia
-						print( "----------»Mandamos al ArduinoA distanciaObj: "+ str(distanciaObj)) # informar el usuario sobre la manda de dirección y distancia
-						print("---------------------------------------------------------------------------------------------------------------------------------")
-						
-						# Se manda la direccionObj y distanciaObj al ArduinoA               
-						direccionObj, distanciaObj = comandoArduino(RECIBIR_DIRECCION_DISTANCIA_OBJ, int(direccionObj), distanciaObj)
-						
-						# Simulación ArduinoA y navegar()------------------------------
-						
-						if simulación == 2:
-							j += 1 
-						
-						# -------------------------------------------------------------
-			
-			# El robot está desplazando hacia la coordenada asignada           
-			elif llegadaArduino == 0:
-				globalesPi.estadoArduinoA = "ArduinoA navegando..." # informar el usuario sobre el estado de ArduinoA
-				sleep(2) 											# no molestar el ArduinoA cuando está desplazando hacía el punto via asignado
+					print("---------------------------------------------------------------------------------------------------------------------------------")
+					print("----------»Mandamos al ArduinoA direccionObj: "+ str(direccionObj)) # informar el usuario sobre la manda de dirección y distancia
+					print("----------»Mandamos al ArduinoA distanciaObj: "+ str(distanciaObj)) # informar el usuario sobre la manda de dirección y distancia
+					print("---------------------------------------------------------------------------------------------------------------------------------")
+
 					
+					# Simulación ArduinoA y navegar()------------------------------
+					if simulación == 2:
+						j += 1 
+					# -------------------------------------------------------------
+			sleep(3)
+		
 
 # Si hay un problema con el sondeo, mover el robot unos centímetros para sondear otra vez 
 def moverReintentoSondeo():
 	
-	while True:
-		
-		if globalesPi.modo != MODO_SONDEO:
-			break
 		print("Moviendo unos centimetros...")
 		sleep(1)
 		
@@ -280,15 +264,11 @@ def moverReintentoSondeo():
 		vigilarModoArduino()
 		
 		# Obtener estatus del ArduinoA, su propio caso de navegación, y su dirección actual
-		llegadaArduino, casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
-		print("«----------llegada ArduinoA: ", llegadaArduino)
+		casoNavegacion, direccionAct = comandoArduino(CONFIRMAR_DATOS)
 		
 		# Si el ArduinoA está listo para recibir instrucciones de navegación
-		if llegadaArduino == 1:
-			direccionObj = globalesPi.direccionObjUltima
-			distanciaObj = 0.1
-			direccionObj, distanciaObj = comandoArduino(RECIBIR_DIRECCION_DISTANCIA_OBJ, int(direccionObj), distanciaObj)	
-			globalesPi.robotDesplazando = False
-			break
+		direcciónObj = comandoArduino(RECIBIR_DIRECCION_OBJ, globalesPi.direccionObjUltima)
+		distanciaObj = comandoArduino(RECIBIR_DISTANCIA_OBJ, 0.1)
+		globalesPi.robotDesplazando = False
 
 

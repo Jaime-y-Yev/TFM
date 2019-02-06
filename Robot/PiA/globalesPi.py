@@ -5,12 +5,12 @@ from comandosParaArduino import *
 #GENERAL
 modo = MODO_INACTIVO #MODO_INACTIVO, MODO_EMERGENCIA, MODO_SONDEO, MODO_NAVEGACION, MODO_MANUAL
 resetearArduino = True
-tiempoInicio = None
+tiempoInicio = 0.0
 
 #MODO_NAVEGACION
 coordAct = [0,0]
 coordActCandidato = [-3.6923941969462253, 40.40798485276355] #Atocha1
-antena = 1
+antena = 0
 
 coordObj = [0,0]
 geometria =  {"coordObj": [0, 0], "geometria": "[0,0][1,1]"}

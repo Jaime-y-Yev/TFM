@@ -34,7 +34,8 @@ from actualizarCodigosDeComandos import *
 # Recompilar el ArduinoA al arrancar PiA para evitar problemas con la comunicación serie
 if globalesPi.resetearArduino:
 	actualizarEncabezamientoArduino(archivoPi,archivoArduinoA)
-	compilarSubirArduino()
+	compilarArduino()
+	subirArduino()
 	globalesPi.resetearArduino = False
 
 
@@ -172,9 +173,12 @@ class Hilo(threading.Thread):
 					globalesPi.coordAct = coordActGPS  # se guarda la coordinada actual en un variable global sin preocuparnos sobre existencia de una solución
 								
 				# Una comprobación final de la coordenada
-				if coordActGPS != 'obteniendo una solucion...':																				
-					pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
-					#guardarCoordAct("RTKTrayectorias0601",coordActGPS)
+				if coordActGPS != 'obteniendo una solucion...':
+
+					if globalesPi.antena == 0:																				
+						pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
+					
+					#guardarCoordAct("RTKTrayectoriasKinOnDynOffThres3Moviendo",coordActGPS)
 
 				# Matar este hilo  
 				if matarHilos == 'm':
@@ -207,23 +211,25 @@ class Hilo(threading.Thread):
 						distanciaEntreCandidatos[i] = distancia(coordActCandidatos[i], coordActCandidatos[i+1])
 					elif i == (len(coordActCandidatos)-1):
 						distanciaEntreCandidatos[i] = distancia(coordActCandidatos[i], coordActCandidatos[0])				
-				
-				# Filtrar la lista de los candidatos
+
+				# Filtrar la lista de los candidatos: no devolver un coordAct hasta que el promedio de la distancia entre los candidatos sea menor que 5 m
+				if max(distanciaEntreCandidatos) <= 5: 
+					coordActMovil = promedio(coordActCandidatos)
+				# Si el promedio de la distancia entre los candidatos es mayor que 5 m, devolver un mensaje informativo
+				else:
+					coordActMovil = 'obteniendo una solucion...'
+					
 				if globalesPi.antena == 1:
-					# No devolver un coordAct hasta que el promedio de la distancia entre los candidatos sea menor que 5 m
-					if max(distanciaEntreCandidatos) <= 5: 
-						coordActMovil = promedio(coordActCandidatos)
-						globalesPi.coordAct = coordActMovil 
-					
-					# Si el promedio de la distancia entre los candidatos es mayor que 5 m, devolver un mensaje informativo
-					else:
-						globalesPi.coordAct = 'obteniendo una solucion...'
-					
-				#guardarCoordAct("Movil",coordActMovil)
+					globalesPi.coordAct = coordActMovil 
 				
 				# Mandar el coordAct válido
 				if globalesPi.coordAct != 'obteniendo una solucion...':
-					pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
+					
+					if globalesPi.antena == 1 :
+						pubMQTT("RobotServidor/coordAct", globalesPi.coordAct)
+					
+					#guardarCoordAct("MovilMoviendo",coordActMovil)
+
 
 				# Matar este hilo  
 				if matarHilos == 'm':
@@ -242,7 +248,7 @@ class Hilo(threading.Thread):
 			while True:
 				
 				# Leer el modo actual del ArduinoA y sincronizarlo con PiA, vigilando cualquier emergencia
-				if monotonic()-tiempoInicial >= intervaloVigilarArduino and globalesPi.robotDesplazando == False:
+				if monotonic()-tiempoInicial >= intervaloVigilarArduino and globalesPi.robotDesplazando == False and globalesPi.modo != MODO_MANUAL:
 					vigilarModoArduino()
 					tiempoInicial = monotonic()
 								
@@ -392,8 +398,8 @@ sleep(0.25)
 # Al encender Pi, actualizar su modo según el modo general del sistema
 pubMQTT("RobotServidor/modo/leer", 1)
 
-#hiloRTK.start()
-#sleep(0.25)
+hiloRTK.start()
+sleep(0.25)
 hiloMovil.start()
 sleep(0.25)
 hiloNavegar.start()
