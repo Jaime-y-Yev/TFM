@@ -1,6 +1,5 @@
 # Librerías de Flask y funciones relacionadas 
 from flask import Flask, flash, redirect, render_template, request, session, jsonify
-# from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # Crear la aplicación de Flask
@@ -51,12 +50,8 @@ def login_required(f):
 
 # Librería y configuración MQTT
 from flask_mqtt import Mqtt
-#app.config['MQTT_BROKER_URL'] = 'iot.eclipse.org'
-#app.config['MQTT_BROKER_URL'] = 'test.mosquitto.org' 
-app.config['MQTT_BROKER_URL'] = 'localhost' #Self
-#app.config['MQTT_BROKER_URL'] = '192.168.1.128' #piA
-#app.config['MQTT_BROKER_URL'] = '192.168.43.25' #móvil
-#app.config['MQTT_BROKER_URL'] = '192.168.1.135' #piB
+app.config['MQTT_BROKER_URL'] = 'localhost'      # Wifi
+#app.config['MQTT_BROKER_URL'] = '192.168.43.25' # Datos
 app.config['MQTT_BROKER_PORT'] = 1883
 app.config['MQTT_USERNAME'] = ''
 app.config['MQTT_PASSWORD'] = ''
@@ -126,7 +121,6 @@ def handle_mqtt_message(client, userdata, message):
 
     # Actualizar el modo del robot si se recibe una petición
     if topic == 'RobotServidor/modo/leer':
-        sleep(5)
         clienteMQTT.publish("ServidorRobot/modoA", modo, qos=1)
         clienteMQTT.publish("ServidorRobot/modoB", modo, qos=1)
         print("Servidor: ServidorRobot/modo --->--->---> ", modo, " --->--->---> Robot")
@@ -214,7 +208,7 @@ def handle_mqtt_message(client, userdata, message):
 
         with open('static/fotoI.jpg', 'wb') as f:
             f.write(imgdata)
-            print("saved fotoI")
+            print("fotoI guardada")
     
     elif topic == 'RobotServidor/resultados/fotos/D':
         print("fotoD recibida")
@@ -224,7 +218,7 @@ def handle_mqtt_message(client, userdata, message):
 
         with open('static/fotoD.jpg', 'wb') as f:
             f.write(imgdata)
-            print("saved fotoD")
+            print("fotoD guardada")
             
 # Log de MQTT
 MQTT_LOG_INFO = 0x01
