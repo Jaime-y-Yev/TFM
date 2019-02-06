@@ -12,9 +12,9 @@
         }
         .marker { 
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: url("https://memegenerator.net/img/images/50x50/15141937.jpg") no-repeat 0 0;
+            width: 30px;
+            height: 30px;
+            background: url("https://thmotorsports.com/content/images/thumbs/default-image-thmotorsports_128_30.gif") no-repeat 0 0;
         }
     </style>
 
@@ -32,7 +32,7 @@
                 {% endfor %}
             </select>
             <!-- Botón que envía el GET a /controlRobot con los datos de la sesión elegida -->
-            <button class="btn btn-primary" type="submit">Elegir Sesión a Ejecutar</button>
+            <button class="btn btn-basic" type="submit">Elegir Sesión a Ejecutar</button>
         </div>
     </form>
 
@@ -46,28 +46,28 @@
 
             <div class="col-md-12">
                 <div class="update-nag">
-                    <div class="update-split"><i class="glyphicon glyphicon-refresh"></i></div>
+                    <div class="update-split update-info"><img src="static/PiA.jpg" alt="Flowers in Chania"></div>
                     <div id="estadoPiA" class="update-text">detectando estado de PiA...</div>
                 </div>
             </div>
         
             <div class="col-md-12">
                 <div class="update-nag">
-                    <div class="update-split update-info"><i class="glyphicon glyphicon-folder-open"></i></div>
+                    <div class="update-split update-info"><img src="static/ArduinoA.jpg" alt="Flowers in Chania"></div>
                     <div id="estadoArduinoA" class="update-text">detectando estado de ArduinoA...</div>
                 </div>
             </div>
     
             <div class="col-md-12">
                 <div class="update-nag">
-                    <div class="update-split update-success"><i class="glyphicon glyphicon-leaf"></i></div>
+                    <div class="update-split update-info"><img src="static/PiB.jpg" alt="Flowers in Chania"></div>
                     <div id="estadoPiB" class="update-text">detectando estado de PiB...</div>
                 </div>
             </div>
             
             <div class="col-md-12">
                 <div class="update-nag">
-                    <div class="update-split update-danger"><i class="glyphicon glyphicon-warning-sign"></i></div>
+                    <div class="update-split update-info"><img src="static/ArduinoB.jpg" alt="Flowers in Chania"></div>
                     <div id="estadoArduinoB" class="update-text">detectando estado de ArduinoB...</div>
                 </div>
             </div>
@@ -76,72 +76,77 @@
     </div>
        
     <div class="container-p-6">
-
         <div class="row">
-
             <div class="col-md-12">
-                <div class="update-title">Control</div>
-            </div>
-            <div class="col-md-12">
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',0);">Emergencia</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',1);">Inactivo</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',2);">Navegación Autónoma</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/modo',4);">Navegación Manual</button>
-                </div>
+                <div class="update-title" style="left: 45px;">Control</div>
             </div>
             <div class="col-md-12">
                 <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/marchaParo',0);">Paro</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/marchaParo',1);">Marcha</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/antena',0);">RaspiGNSS</button>
-                    <button type='button' class="btn btn-primary" onClick="pubMQTT('ServidorRobot/antena',1);">Móvil</button>
+                    <button type='button' class="btn btn-danger" onClick="pubMQTT('ServidorRobot/modo',0);">Emergencia</button>
+                    <button type='button' class="btn btn-basic" onClick="pubMQTT('ServidorRobot/modo',1);">Inactivo</button>
+                    <button type='button' class="btn btn-basic" onClick="pubMQTT('ServidorRobot/modo',2);">Nav Autónoma</button>
+                    <button type='button' class="btn btn-basic" onClick="pubMQTT('ServidorRobot/modo',4);">Nav Manual</button>
                 </div>
             </div>
-        </div>
-        
-        <div class="container-p-7">
-            <div class="row2">
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',1);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary"></button>
-                </div>
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ai');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Arrow_northwest.svg/900px-Arrow_northwest.svg.png' style="width:20px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ar');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ad');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Arrow_northeast.svg/1024px-Arrow_northeast.svg.png' style="width:20px;height:20px;"></button>
-                </div>
-            </div>
-            <div class="row2">
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',3);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
-                    <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',4);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
-                </div>
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','gi');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','pf');" onmouseup="pubMQTT('ServidorRobot/navManual','pf');"><img src='http://pluspng.com/img-png/circle-png-circle-png-hd-1600.png' style="width:10px;height:10px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','gd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
-                </div>
-            </div>
-            <div class="row2">
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/moverCamara',2);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary"></button>
-                </div>
-                <div class="btn-group">
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','ri');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Arrow_southwest.svg/900px-Arrow_southwest.svg.png' style="width:20px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','rr');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
-                    <button type='button' class="btn btn-primary" onmousedown="pubMQTT('ServidorRobot/navManual','rd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Arrow_southeast.svg/900px-Arrow_southeast.svg.png' style="width:20px;height:20px;"></button>
-                </div>
-            </div>
+            <div class="col-md-12"></div>
         </div>
     </div> 
+    <div class="container-p-7">
+        <div class="col-md-12">
+            <div class="btn-group">
+                <button type='button' class="btn btn-danger" onClick="pubMQTT('ServidorRobot/marchaParo',0);">Paro</button>
+                <button type='button' class="btn btn-success" onClick="pubMQTT('ServidorRobot/marchaParo',1);">Marcha</button>
+            </div>
+        </div>
+        <div class="col-md-12"></div>
+        <div class="col-md-12">
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" onClick="pubMQTT('ServidorRobot/antena',0);">RaspiGNSS</button>
+                <button type='button' class="btn btn-basic" onClick="pubMQTT('ServidorRobot/antena',1);">Móvil</button>
+            </div>
+        </div>
+    </div>
+    <div class="container-p-8">
+        <div class="row2">
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" style="width: 45px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/moverCamara',1);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" style="width: 45px;"></button>
+            </div>
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','ai');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Arrow_northwest.svg/900px-Arrow_northwest.svg.png' style="width:20px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','ar');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Arrow_north.svg/320px-Arrow_north.svg.png' style="width:10px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','ad');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Arrow_northeast.svg/1024px-Arrow_northeast.svg.png' style="width:20px;height:20px;"></button>
+            </div>
+        </div>
+        <div class="row2">
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/moverCamara',3);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                <button type='button' class="btn btn-basic" style="width: 34px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/moverCamara',4);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+            </div>
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','gi');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Arrow_west.svg/2000px-Arrow_west.svg.png' style="width:20px;height:10px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','pf');" onmouseup="pubMQTT('ServidorRobot/navManual','pf');"><img src='http://pluspng.com/img-png/circle-png-circle-png-hd-1600.png' style="width:10px;height:10px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','gd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Arrow_east.svg/1200px-Arrow_east.svg.png' style="width:20px;height:10px;"></button>
+            </div>
+        </div>
+        <div class="row2">
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" style="width: 45px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/moverCamara',2);" onmouseup="pubMQTT('ServidorRobot/moverCamara',0);"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" style="width: 45px;"></button>
+            </div>
+            <div class="btn-group">
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','ri');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Arrow_southwest.svg/900px-Arrow_southwest.svg.png' style="width:20px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','rr');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Arrow_south.svg/2000px-Arrow_south.svg.png' style="width:10px;height:20px;"></button>
+                <button type='button' class="btn btn-basic" onmousedown="pubMQTT('ServidorRobot/navManual','rd');" onmouseup="pubMQTT('ServidorRobot/navManual','ps');"><img src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Arrow_southeast.svg/900px-Arrow_southeast.svg.png' style="width:20px;height:20px;"></button>
+            </div>
+        </div>
+    </div>
 
-    <!-- <img id="fotoI" src="static/fotoI.jpg" alt="Flowers in Chania">
-    <img id="fotoD" src="static/fotoD.jpg" alt="Flowers in Chania"> -->
+    <img id="fotoI" src="static/fotoI.jpg" alt="Flowers in Chania">
+    <img id="fotoD" src="static/fotoD.jpg" alt="Flowers in Chania">
 
 {% endblock %}
 
@@ -419,10 +424,10 @@
         }, 300);
 
 
-        //setInterval(function(){
-        //    document.getElementById("fotoI").src = "static/fotoI.jpg";
-        //    document.getElementById("fotoD").src = "static/fotoD.jpg";
-        //}, 10000);
+        setInterval(function(){
+            document.getElementById("fotoI").src = "static/fotoI.jpg";
+            document.getElementById("fotoD").src = "static/fotoD.jpg";
+        }, 10000);
     </script>
 
 {% endblock %}

@@ -24,7 +24,7 @@
                     <option value="{{ nombre[0] }}">{{ nombre[0] }}</option>
                 {% endfor %}
             </select>
-            <button class="btn btn-primary" type="submit">Ver Parcela</button>
+            <button class="btn btn-basic" type="submit">Ver Parcela</button>
         </div>
     </form>    
 
@@ -37,10 +37,10 @@
     </div>
     
     <!-- Lanza el calendario para elegir la fecha -->
-    <button id="peticiónID" class="btn btn-primary" type="submit">Elegir Fecha</button>
+    <button id="peticiónID" class="btn btn-basic" type="submit">Elegir Fecha</button>
 
     <!-- Botón que envía la sesión y su fecha de ejecución a /verParcela, donde se subirán a la base de datos -->
-    <button id="submitID" class="btn btn-primary" type="submit">Enviar Petición</button>
+    <button id="submitID" class="btn btn-basic" type="submit">Enviar Petición</button>
     
     <div  class="container p-5">
 
@@ -53,7 +53,7 @@
                         <option name="fechaElegida" value="{{ fecha }}">{{ fecha }}</option>
                     {% endfor %}
                 </select>
-                <button class="btn btn-primary" type="submit">Ver Resultados</button>
+                <button class="btn btn-basic" type="submit">Ver Resultados</button>
             </div>
         </form>    
         <!-- Tabla que muestra todos los resultados para una parcela, filtrados según la fecha elegida anteriormente -->
@@ -81,7 +81,7 @@
             </tbody >
         </table>
     </div>
-    <button class="btn btn-primary" onclick="mandarResultados()">Mandar Resultados</button>
+    <button class="btn btn-basic" onclick="mandarResultados()">Mandar Resultados</button>
 
 {% endblock %}   
  
@@ -240,12 +240,11 @@
         var filas = document.getElementById("tablaResultados").rows;
         for (let i = 1; i < filas.length; i++)
         {
-            var coords = filas[i].cells[0].innerText;  coords = JSON.parse(coords);     //console.log("coords = ", coords); console.log("type of coords = ", typeof(coords));
-            var lon = coords[0];    // console.log("lon = ", lon); console.log("type of lon = ", typeof(lon));
-            var lat = coords[1];    // console.log("lat = ", lat); console.log("type of lat = ", typeof(lat));
+            var coords = filas[i].cells[0].innerText;  coords = JSON.parse(coords);     //console.log("coords = ", coords); 
+            var lon = coords[0];    // console.log("lon = ", lon);
+            var lat = coords[1];    // console.log("lat = ", lat);
             
-            var result = filas[i].cells[res].innerText;   result = parseFloat(result); //console.log("result = ", result); console.log("type of result = ", typeof(result));
-
+            var result = filas[i].cells[res].innerText;   result = parseFloat(result);  //console.log("result = ", result); 
             var resultado = new Object;
             resultado.lat = lat;
             resultado.lon = lon;
@@ -256,9 +255,6 @@
 
         console.log("resultados = ", resultados);
         
-
-        //var min = Math.min(resultados.result);     console.log("min = ", min);
-        //var max = Math.max(resultados.result);     console.log("max = ", max);
 
         var min = 1000000000000.0;
         var max = 0.0;
@@ -297,9 +293,6 @@
         var puntos1 = [];
         for (let i = 0; i < resultados1.length; i++)
         {
-            //console.log("[resultados1[", i,"].lon = ", resultados1[i].lon);
-            //console.log("[resultados1[", i,"].lat = ", resultados1[i].lat);
-
             puntos1.push(new ol.Feature({
                 geometry: new ol.geom.Point([resultados1[i].lon, resultados1[i].lat])
             }))
@@ -350,12 +343,10 @@
             return stylePuntos;
         }
 
-        // Reescribir la capaTrayectoriaAct con los nuevos puntos
         capaResultados1 = new ol.layer.Vector({
             source: new ol.source.Vector({
                 features: puntos1
             }),
-            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
             style: determinarEstilo(0.1)
         });
 
@@ -363,7 +354,6 @@
             source: new ol.source.Vector({
                 features: puntos2
             }),
-            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
             style: determinarEstilo(0.3)
         });
 
@@ -371,7 +361,6 @@
             source: new ol.source.Vector({
                 features: puntos3
             }),
-            // Distinguir la trayectoria actual de la trayectoria objetiva con un color distinto
             style: determinarEstilo(0.5)
         });
 
@@ -382,31 +371,22 @@
     }
 
         function mostrarResultado(res, ident) {
-            // Get the checkbox
-//            var checkBox = document.getElementById("checkTemp");
             var checkbox = document.getElementById(ident);
 
-            // Get the output text
-            //var text = document.getElementById("text");
             map.removeLayer(capaResultados1);
             map.removeLayer(capaResultados2);
             map.removeLayer(capaResultados3);
 
             var checkboxes = document.getElementsByTagName('input');
-            console.log("checkboxes = ", checkboxes);
             for (let i = 0; i < checkboxes.length; i++)
             {
                 if (checkbox != checkboxes[i])
                     checkboxes[i].checked = false;
             }
-
-            
-            // If the checkbox is checked, display the output text
+        
             if (checkbox.checked == true)
-            {
                 mostrar(res)
-                //text.style.display = "block";
-            } 
+             
         }
 
     </script>
