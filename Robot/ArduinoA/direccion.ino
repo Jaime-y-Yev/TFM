@@ -21,59 +21,13 @@ void leerMagnetometro()
   if (IMPRIMIR_MAG) {Serial.print(F("direccionAct = ")); Serial.println(direccionAct);}
 }
 
-// Calcular cuanto el robot tiene que girar para desplazar en la dirección obj
-//int calcularGiro()
-//{
-//  // Obtener el valor de giro preliminar
-//  int errorDireccion = direccionObj - direccionAct;
-//  if (IMPRIMIR) {Serial.print(F("errorDireccion antes: ")); Serial.println(errorDireccion);} 
-//
-//  // Ajustar el valor preliminar para obtener un valor entre 0 a 360
-//  if (errorDireccion < -180)
-//    errorDireccion += 360;
-//  if (errorDireccion > 180)
-//    errorDireccion -= 360;
-//  
-//  if (IMPRIMIR) {Serial.print(F("errorDireccion después: ")); Serial.println(errorDireccion);} 
-//
-//  int giro;
-//  // Si la dirección está dentro de una tolerancia, el robot no gira
-//  if (abs(errorDireccion) <= TOL_DIRECCION)    
-//    giro = GIRO_RECTO;
-//  // Si la dirección no está dentro de una tolerancia elegir la dirección del giro 
-//  else if (abs(errorDireccion) > TOL_DIRECCION) 
-//  {
-//    if (errorDireccion < 0)
-//    {
-//      if (errorDireccion >= 180)
-//        giro = GIRO_DERECHA;
-//
-//      else if (errorDireccion < 180)
-//        giro = GIRO_IZQUIERDA;
-//    }
-//    else if (errorDireccion > 0)
-//    {
-//      if (errorDireccion >= 180)
-//        giro = GIRO_IZQUIERDA;
-//
-//      else if (errorDireccion < 180)
-//        giro = GIRO_DERECHA;
-//    }
-//  }
-//  
-//  // Devolver la dirección 
-//  return giro;
-//}
 
 // Calcular cuanto el robot tiene que girar para desplazar en la dirección obj
 int calcularGiro()
 {
   // Obtener el valor de giro preliminar
   int errorDireccion = direccionObj - direccionAct;
-  if (IMPRIMIR) {Serial.print(F("errorDireccion antes: ")); Serial.println(errorDireccion);} 
-
-  
-  if (IMPRIMIR) {Serial.print(F("errorDireccion después: ")); Serial.println(errorDireccion);} 
+  if (IMPRIMIR) {Serial.print(F("errorDireccion: ")); Serial.println(errorDireccion);} 
 
   int giro;
   // Si la dirección está dentro de una tolerancia, el robot no gira
