@@ -7,7 +7,9 @@
 // Comandos de RPi
 #include "headers/comandos.h"
 char mensaje[20];
-int comando;
+char comando[3];
+int codigoComando;
+char valor[8];
 
 // Modos
 int modo = MODO_INACTIVO;
@@ -37,12 +39,13 @@ int humedad;
 // Arrancar el control IR y el relé
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600,SERIAL_8E1);
 
   // IR
   irrecv.enableIRIn();        // arrancar el IR
   irrecv.blink13(true);       // parpadear LED_BUILTIN al recibir un valor IR (ayuda a depurar)
 
+/*
   // Interrupcion
   pinMode(PIN_INTERRUPCION_DESCONECT, INPUT_PULLUP); 
   pinMode(PIN_INTERRUPCION_CONECT, INPUT_PULLUP);
@@ -50,10 +53,10 @@ void setup()
   digitalWrite(PIN_INTERRUPCION_CONECT, LOW); // Habilitar el pullup en el pin digital 3
   attachInterrupt(digitalPinToInterrupt(PIN_INTERRUPCION_DESCONECT), desconectarBateria, RISING);
   attachInterrupt(digitalPinToInterrupt(PIN_INTERRUPCION_CONECT), conectarBateria, RISING);
-
+  */
   // Relé
   pinMode(RELE, OUTPUT);      // el Arduino envía una señal de trigger al relé
-  digitalWrite(RELE, LOW);    // asegurarse de empezar con la batería desconectada
+  digitalWrite(RELE, HIGH);    // asegurarse de empezar con la batería desconectada
 
   DHT.read11(PIN_DHT11);
   temperatura = DHT.temperature;
@@ -64,7 +67,8 @@ void setup()
 // Conectar o desconectar la batería según el comando IR que llegue
 void loop()
 {
-  delay(300);
+  //digitalWrite(RELE, HIGH);    // asegurarse de empezar con la batería desconectada
+
   
   // Recibir mensajes de PiA, decodificarlos, y hacer una conversión a forma útil----------------------------------
   if (Serial.available())
@@ -73,30 +77,34 @@ void loop()
     for (i = 0; Serial.available(); i++)          // si hay una conexión con PiA, empieza a recibir mensajes
       mensaje[i] = Serial.read();                 // guarda el mensaje caracter por caracter
     mensaje[i] = '\0';                            // convierte mensaje a string
+
+    comando[0] = mensaje[0];
+    comando[1] = mensaje[1];
+    comando[2] = '\0';                // utilizar el cáracter de terminación saber donde termina el mensaje
+    codigoComando = atoi(comando);    // conversión del mensaje de string a float
   }
   else
   {
      memset(mensaje, '\0', sizeof(mensaje));         // vaciar el mensaje (reinicializarlo a todo 0's) 
-     memset(comando, '\0', sizeof(comando));         // vaciar el comando (reinicializarlo a todo 0's) 
+     memset(comando, '\0', sizeof(comando));         // vaciar el comando (reinicializarlo a todo 0's)
+     codigoComando = 0; 
+     memset(valor, '\0', sizeof(valor));         // vaciar el comando (reinicializarlo a todo 0's)
   }
 
-  comando = (int)convertirAfloat(mensaje, 1, 0);  // conversión del mensaje de string a float
 
-  // ArduinoA informa PiA de su modo 
-  if (comando == LEER_MODO)
+  // ArduinoB informa PiB de su modo 
+  if (codigoComando == LEER_MODO)
   {
-    String respuesta = 'X' + String(modo) + 'x';  // eco el comando a PiA con caracteres de inciación y terminación
-    Serial.println(respuesta);
+    Serial.print(String(modo));
     Serial.flush();
   }   
   // Cambiar el modo de Arduino
-  else if (comando == CAMBIAR_MODO)
+  if (codigoComando == CAMBIAR_MODO)
   {
      *modoPuntero = mensaje[2] - '0';         
-     String respuesta = 'X' + String(modo) + 'x';  // eco el comando a PiA con caracteres de inciación y terminación
-     Serial.println(respuesta);
+     Serial.print(String(modo));
      Serial.flush();
-  }   
+  }    
   
   
   DHT.read11(PIN_DHT11);
@@ -109,17 +117,17 @@ void loop()
 
   if (temperatura >= 45 || humedad >= 60)
   {
-    //Serial.println("Exceeded temp or humidity limit");
+    Serial.println("Excedido el límite de temperatura o humedad");
     desconectarBateria();
     *modoPuntero = MODO_EMERGENCIA;
   }
 
   long nivelBateria = medirBateriaSeguridad();
-  //Serial.print("nivelBateria = "); Serial.println(nivelBateria, DEC); 
+ //Serial.print("nivelBateria = "); Serial.println(nivelBateria, DEC); 
   
   if (nivelBateria <= 4700)
   {
-    //Serial.println("Battery low");
+    Serial.println("Batería baja");
     desconectarBateria();
     *modoPuntero = MODO_EMERGENCIA; 
   }
@@ -127,11 +135,13 @@ void loop()
   // Si llega cualquier comando IR, desconectar o conectar la bateria dependiendo de su estado actual
   if (irrecv.decode(&results))    
   {
-    //Serial.print("results.value = "); Serial.println(results.value);   
-    digitalWrite(RELE, !bitRead(PORTD, RELE));   // escribir el valor opuesto al estado actual del pin    
-    delay(200);   // evitar doble recepcion del comando IR 
+    //Serial.print("Tipo = ");    Serial.println(results.decode_type);  
+    //Serial.print("Valor = ");   Serial.println(results.value);   
+    
+    digitalWrite(RELE, !bitRead(PORTD, RELE));      // escribir el valor opuesto al estado actual del pin    
+    delay(200);                                     // evitar doble recepcion del comando IR 
 
-    irrecv.resume();              // preparase para recibir el siguiente valor
+    irrecv.resume();                                // preparase para recibir el siguiente valor
   }
 }
 
@@ -172,18 +182,4 @@ long medirBateriaSeguridad()
 
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return result; // Vcc in millivolts
-}
-
-// Convertir array a float
-float convertirAfloat(char mensaje[], int numDigitos, int comienzoMensaje)
-{
-  int i;
-  char vector[20];   // crear un array con la longitúd del mensaje
-
-  // En un bucle, añadir el mensaje en el array
-  for (i = 0; i <= numDigitos; i++) 
-    vector[i] = mensaje[i + comienzoMensaje];
-  vector[i] = '\0';                // utilizar el cáracter de terminación saber donde termina el mensaje
-
-  return atof(vector);             // devolver el mensaje en formato float
 }
