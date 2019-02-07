@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     // Recorrer las filas de la imagen
     for (int i = 0, biHeight = abs(bi.biHeight); i < biHeight; i++)
     {
-		// Recorrer los píxeles de la fila
+	// Recorrer los píxeles de la fila
         for (int j = 0; j < bi.biWidth; j++)
         {
             // Cada pixel contiene 3 valores
@@ -62,23 +62,23 @@ int main(int argc, char *argv[])
             // Leer el pixel actual del archivo
             fread(&triple, sizeof(RGBTRIPLE), 1, inptr);
             
-			// Calcular el numerador y el denominador del VARI para este pixel
-			float numerador = triple.rgbtGreen - triple.rgbtRed;
-			float denominador = triple.rgbtGreen + triple.rgbtRed - triple.rgbtBlue;
+	    // Calcular el numerador y el denominador del VARI para este pixel
+	    float numerador = triple.rgbtGreen - triple.rgbtRed;
+	    float denominador = triple.rgbtGreen + triple.rgbtRed - triple.rgbtBlue;
 			
-			// Para evitar la excepción al dividir por 0	
-			if (denominador == 0)
-				denominador++;
+	    // Para evitar la excepción al dividir por 0	
+	    if (denominador == 0)
+		denominador++;
             	
-			vari = numerador/denominador;
+	    vari = numerador/denominador;
 			
-			//printf("%f \n", vari);
+	    //printf("%f \n", vari);
 
-			// Considerar que un pixel es bueno si tiene suficiente VARI
-			if (vari >= 0.6) {
-				//printf("buen pixel \n");
-				numPixelesBuenos++;			 	
-			}
+	    // Considerar que un pixel es bueno si tiene suficiente VARI
+	    if (vari >= 0.6) {
+		//printf("buen pixel \n");
+		numPixelesBuenos++;			 	
+	    }
 			
             numPixelesTotal++;
         }
@@ -88,13 +88,13 @@ int main(int argc, char *argv[])
     }
     
     //printf("%f \n", numPixelesBuenos);
-	//printf("%f \n", numPixelesTotal);
+    //printf("%f \n", numPixelesTotal);
 
-	float porcentajeVerde = numPixelesBuenos / numPixelesTotal;
-	//printf("%.10f \n", porcentajeVerde);
+    float porcentajeVerde = numPixelesBuenos / numPixelesTotal;
+    //printf("%.10f \n", porcentajeVerde);
 
-	porcentajeVerde = porcentajeVerde*100;
-	printf("%.4f", porcentajeVerde);
+    porcentajeVerde = porcentajeVerde*100;
+    printf("%.4f", porcentajeVerde);
 
     // Cerrar la imagen
     fclose(inptr);
