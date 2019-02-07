@@ -131,7 +131,7 @@ void parada(void)
 {
   if (IMPRIMIR_NAV) Serial.println(F("A: Obstáculo en frente demasiado cerca...parando"));
   parar();
-  delay(3000);
+  (3000);
 }  
 
 // Caso B: Si el robot se encuentra al OBSTÁCULO DE LADO demasiado cerca, desviarse hacia el lado opuesto
@@ -341,7 +341,7 @@ void obstaculoAdistanciaPequena(int giro)
         {
           parar();
           if (IMPRIMIR_NAV) Serial.println(F("PARADO POR 2 Seg"));
-          delay(2000);
+          delay(2000); // Opcional! Sólo para demonstración
           giroCompleto = true;
           //*modoPuntero = MODO_INACTIVO; break;
         }
@@ -422,7 +422,6 @@ void obstaculoAdistanciaPequena(int giro)
               giro = GIRO_IZQUIERDA;
             }
           
-            //desp = DESP_POSITIVO;
             *despPuntero = DESP_POSITIVO;
             velocidad = VEL_LENTA;
             activarMotores(giro,velocidad,desp);
@@ -431,8 +430,6 @@ void obstaculoAdistanciaPequena(int giro)
           
           if (IMPRIMIR_NAV)  Serial.println(F("obstáculo evitado.."));
           evitarObst = true;
-          //*modoPuntero = MODO_INACTIVO;
-          //delay(2000);
           break;   
         }                                      
       }     
@@ -492,19 +489,4 @@ int direccionEntreFilas(float distanciaSonarI1, float distanciaSonarD1)
 }
 
 
-/*
-float hallarDistanciaLado(float a, float b)
-{
-  float distanciaSonar1 = min(a,b);
-  float distanciaSonar2 = max(a,b); 
 
-  float distanciaEntreSonares12 = 0.3;
-  float distanciaExtension = 0.2;
-  distanciaSonar2 = distanciaSonar2 + distanciaExtension;
-  
-  float theta2 = atan(distanciaEntreSonares12/(distanciaSonar2-distanciaSonar1));
-  float distanciaLado = distanciaSonar1*tan(theta) ;
-
-  float dif = distanciaSonar2 - distanciaSonar1;
-}
-*/  
