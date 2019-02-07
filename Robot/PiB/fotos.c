@@ -45,10 +45,10 @@ int main(int argc, char *argv[])
     // Determinar el colchón
     int padding = (4 - (bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
 
-	float vari = 0.0;
+    float vari = 0.0;
 	
-	float numPixelesTotal = 0.0;
-	float numPixelesBuenos = 0.0;
+    float numPixelesTotal = 0.0;
+    float numPixelesBuenos = 0.0;
 
     // Recorrer las filas de la imagen
     for (int i = 0, biHeight = abs(bi.biHeight); i < biHeight; i++)
