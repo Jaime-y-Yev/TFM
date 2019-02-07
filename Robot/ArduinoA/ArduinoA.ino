@@ -253,7 +253,7 @@ void loop()
         valor[i-2] = mensaje[i];                 // guarda el mensaje caracter por caracter
       valor[i-1] = '\0';
 
-      //Serial.print("valorDir = ");Serial.println(valorDir);
+      //Serial.print("valor = ");Serial.println(valor);
 
       *direccionObjPuntero = atoi(valor);         // recibir dirección y guardarla en variable global
             
@@ -270,7 +270,7 @@ void loop()
         valor[i-2] = mensaje[i];                 // guarda el mensaje caracter por caracter
       valor[i] = '\0';
 
-      //Serial.print("valorDist = ");Serial.println(valorDist);
+      //Serial.print("valor = ");Serial.println(valor);
 
       *distanciaObjPuntero = atof(valor);              // recibir distancia y guardarla en variable global
             
