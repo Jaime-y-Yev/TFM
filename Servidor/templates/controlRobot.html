@@ -338,10 +338,10 @@
 
         /***************************************************************  Informar de modo y estados  ***************************************************************/
 
-        // Establecer el modo de operación del robot
+        // Enviar un mensaje a Flask para publicar por MQTT
         function pubMQTT(topic, mensaje)
         {
-            // Crear un objeto JSON para la señal de control y asignarle el modo elegido
+            // Crear un objeto JSON con el topic y mensaje
             var control = new Object();
             control.topic = topic;
             control.mensaje = mensaje;
